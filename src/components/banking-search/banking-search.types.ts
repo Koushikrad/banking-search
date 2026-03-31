@@ -1,11 +1,12 @@
 /**
  * banking-search.types.ts
+ * @author Koushik R.
  *
- * Single source of truth for all public TypeScript interfaces and types.
+ * Public TypeScript interfaces and types for the <banking-search> component.
  * This file has zero runtime footprint — it is erased entirely at compile time.
  *
- * Consumers who use the ESM build can import from 'banking-search' directly;
- * all types are re-exported via src/index.ts.
+ * Consumers using the ESM build can import types directly from 'banking-search'.
+ * All types are re-exported via src/index.ts.
  */
 
 // ---------------------------------------------------------------------------
@@ -14,7 +15,7 @@
 
 /**
  * Badge attached to a result row.
- * Variant drives the colour token applied in banking-search.styles.ts.
+ * The variant drives the colour token applied in banking-search.styles.ts.
  *
  * - success  → green  (e.g. "Active", "Approved")
  * - warning  → amber  (e.g. "Pending", "Flagged")
@@ -29,17 +30,17 @@ export interface ResultBadge {
 /**
  * A single search result row.
  *
- * `type` is a plain string (not a strict union) so the host can extend it
- * with domain-specific entity types (e.g. 'branch', 'product') without
- * modifying this file. The component uses `type` only to resolve an icon
- * key — unknown types fall back to a generic icon.
+ * The `type` field is a plain string rather than a strict union so the host
+ * can extend it with domain-specific entity types (e.g. 'branch', 'product')
+ * without modifying this file. The component uses `type` only to resolve an
+ * icon key — unknown types fall back to a generic icon.
  */
 export interface SearchResultItem {
   /** Stable unique identifier — used as the `id` on the `role="option"` element. */
   id: string;
 
   /**
-   * Entity type, used to resolve the icon.
+   * Entity type used to resolve the icon.
    * Built-in values: 'account' | 'transaction' | 'customer' | 'card' | 'loan'
    * Custom values are accepted and fall back to the generic icon.
    */
@@ -56,8 +57,8 @@ export interface SearchResultItem {
 
   /**
    * Icon key resolved to an SVG symbol.
-   * If omitted, falls back to `type`. If the key is unknown, uses 'generic'.
-   * No emojis — SVG only.
+   * Falls back to `type` if omitted. Falls back to 'generic' if the key is unknown.
+   * No emojis — SVG icons only.
    */
   icon?: string;
 
@@ -69,7 +70,7 @@ export interface SearchResultItem {
   meta?: Record<string, string>;
 
   /**
-   * Optional navigation URL. When set, selecting the item navigates to this URL
+   * Optional navigation URL. When set, selecting the item navigates here
    * in addition to firing the bs:select event. When absent, only the event fires.
    */
   url?: string;
@@ -113,7 +114,7 @@ export type SearchResults = SearchResultItem[] | SearchResultGroup[];
 
 /**
  * A single filter chip shown in the filter bar.
- * The host sets `el.filters = [...]` to populate the chip row.
+ * Set via: el.filters = [...]
  */
 export interface FilterOption {
   /** Stable identifier sent in bs:search and bs:filter-change event details. */
@@ -123,8 +124,8 @@ export interface FilterOption {
   label: string;
 
   /**
-   * Optional count badge on the chip.
-   * Useful for showing total results per category.
+   * Optional count badge shown on the chip.
+   * Useful for displaying total results per category.
    */
   count?: number;
 }
@@ -136,13 +137,13 @@ export interface FilterOption {
 /**
  * String values the host may set on the `error` attribute.
  * The component maps each code to a human-safe display message.
- * Never pass raw server error strings — use these codes or a safe custom message.
+ * Never pass raw server error strings — always use these codes or a safe custom message.
  */
 export type ErrorCode =
   | 'network'      // fetch failed / offline
   | 'timeout'      // request exceeded threshold
   | 'rate-limited' // HTTP 429
-  | 'unauthorized' // HTTP 401/403 — show generic message only
+  | 'unauthorized' // HTTP 401/403 — renders a generic message only
   | 'server'       // HTTP 5xx
   | 'unknown';     // catch-all
 
@@ -154,7 +155,7 @@ export type ErrorCode =
 export interface BsSearchDetail {
   term: string;
   filter: string;
-  /** Monotonic ID per search invocation — used by the host for AbortController cancellation. */
+  /** Monotonic ID per search invocation — lets the host cancel in-flight requests. */
   requestId: string;
 }
 
@@ -174,7 +175,7 @@ export interface BsRetryDetail {
   filter: string;
 }
 
-/** Detail shape for the `bs:error` event (for host observability logging). */
+/** Detail shape for the `bs:error` event — used by the host for observability logging. */
 export interface BsErrorDetail {
   code: string;
   term: string;
@@ -183,13 +184,13 @@ export interface BsErrorDetail {
 }
 
 // ---------------------------------------------------------------------------
-// renderItem callback
+// Custom item renderer
 // ---------------------------------------------------------------------------
 
 /**
- * Optional custom item renderer.
- * If set on the `renderItem` property, called once per result item.
- * Must return a plain HTMLElement — no framework components, no innerHTML with user data.
- * Falls back to the default template when null.
+ * Optional callback for rendering a custom result row.
+ * When set on the `renderItem` property, called once per result item.
+ * Must return a plain HTMLElement — no innerHTML with user-supplied data.
+ * Falls back to the built-in template when null.
  */
 export type RenderItemFn = (item: SearchResultItem) => HTMLElement;

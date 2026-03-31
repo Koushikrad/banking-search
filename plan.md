@@ -701,19 +701,20 @@ Each phase ends with a **Review Checkpoint** — user reviews the output, we dis
 ### Phase 1 — Project Scaffold & Build Pipeline
 **Goal:** Working project skeleton you can `npm run dev` and see a blank page, `npm test` runs (no tests yet), `npm run build` produces ESM output.
 
-- [ ] `npm create vite@latest . --template vanilla-ts` (inside search-component/)
-- [ ] Install: `lit`, `@lit/reactive-element`
-- [ ] Install dev: `typescript`, `vitest`, `@vitest/ui`, `@web/test-runner`, `@open-wc/testing`, `axe-core`, `@axe-core/playwright`
-- [ ] `vite.config.ts` — library mode: `entry: src/index.ts`, formats: `['es', 'umd']`, external: `['lit']`
-- [ ] `tsconfig.json` — strict mode, decorators enabled (`experimentalDecorators`, `useDefineForClassFields: false`)
-- [ ] `vitest.config.ts` — jsdom environment for unit tests
-- [ ] `web-test-runner.config.mjs` — Playwright, Chromium, for real DOM tests
-- [ ] Create folder structure: `src/components/banking-search/`, `src/utils/`, `src/controllers/`, `tests/`
-- [ ] `src/components/banking-search/banking-search.types.ts` — all TypeScript interfaces
-- [ ] `src/index.ts` — barrel export + `customElements.define('banking-search', BankingSearch)`
-- [ ] `package.json` scripts: `dev`, `build`, `test`, `test:browser`, `test:ui`
+- [x] `npm create vite@latest . --template vanilla-ts` (inside search-component/)
+- [x] Install: `lit`, `@lit/reactive-element`
+- [x] Install dev: `typescript`, `vitest`, `@vitest/ui`, `@web/test-runner`, `@open-wc/testing`, `axe-core`, `@axe-core/playwright`
+- [x] `vite.config.ts` — library mode: `entry: src/index.ts`, formats: `['es', 'umd']`, external: `['lit']`
+- [x] `tsconfig.json` — strict mode, decorators enabled (`experimentalDecorators`, `useDefineForClassFields: false`)
+- [x] `vitest.config.ts` — jsdom environment for unit tests
+- [x] `web-test-runner.config.mjs` — Playwright, Chromium, for real DOM tests
+- [x] Create folder structure: `src/components/banking-search/`, `src/utils/`, `src/controllers/`, `tests/`
+- [x] `src/components/banking-search/banking-search.types.ts` — all TypeScript interfaces
+- [x] `src/index.ts` — barrel export + `customElements.define('banking-search', BankingSearch)`
+- [x] `package.json` scripts: `dev`, `build`, `test`, `test:browser`, `test:ui`
 
 **Review Checkpoint 1:** Build runs, types compile with zero errors, dev server starts.
+**STATUS: COMPLETE — commit `e082470`**
 
 ---
 

@@ -1,19 +1,22 @@
 /**
- * src/index.ts — Public entry point for the banking-search library.
+ * src/index.ts
+ * @author Koushik R.
+ *
+ * Public entry point for the banking-search library.
  *
  * Importing this file auto-registers <banking-search> as a custom element.
- * All public types are re-exported so TypeScript consumers get them
- * without a separate @types package.
+ * All public types are re-exported so TypeScript consumers get full type
+ * coverage without a separate @types package.
  *
  * Usage:
- *   import 'banking-search';                     // side-effect: registers element
- *   import type { SearchResultItem } from 'banking-search'; // types
+ *   import 'banking-search';                          // registers the element
+ *   import type { SearchResultItem } from 'banking-search';  // types only
  */
 
 import { BankingSearch } from './components/banking-search/banking-search.js';
 
-// Register the custom element. Guard prevents double-registration errors
-// when multiple bundles import this file (e.g. micro-frontend setups).
+// Guard against double-registration errors that can occur in micro-frontend
+// setups where multiple bundles may import this module independently.
 if (!customElements.get('banking-search')) {
   customElements.define('banking-search', BankingSearch);
 }
