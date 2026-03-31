@@ -1,0 +1,2290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banking Search — Component Demo</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --page-bg: #f0f4f8;
+      --page-text: #1a202c;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --card-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+      --accent: #0066cc;
+      --accent-dark: #004fa3;
+      --tag-bg: #ebf4ff;
+      --tag-text: #0066cc;
+      --code-bg: #1e2a3b;
+      --code-text: #a8daff;
+      --success: #16a34a;
+      --error: #dc2626;
+      --warn: #d97706;
+      --neutral: #6b7280;
+      --log-bg: #0f172a;
+      --log-text: #94a3b8;
+      --radius: 12px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    [data-page-theme="dark"] {
+      --page-bg: #0f172a;
+      --page-text: #e2e8f0;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --card-shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2);
+      --tag-bg: #1e3a5f;
+      --tag-text: #7ec8ff;
+      --log-bg: #020617;
+      --log-text: #64748b;
+    }
+
+    html { font-family: var(--font); font-size: 16px; }
+    body {
+      background: var(--page-bg);
+      color: var(--page-text);
+      min-height: 100vh;
+      transition: background .25s, color .25s;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────────── */
+    .page-header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .page-header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.3px;
+    }
+
+    .header-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .container { max-width: 960px; margin: 0 auto; padding: 32px 20px 120px; }
+
+    /* ── Cards ────────────────────────────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--neutral);
+      margin-bottom: 16px;
+    }
+
+    /* ── Buttons ──────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--page-text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, transform .1s;
+      font-family: var(--font);
+    }
+    .btn:hover { background: var(--page-bg); border-color: var(--accent); }
+    .btn:active { transform: scale(.97); }
+    .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-danger { border-color: var(--error); color: var(--error); }
+    .btn-danger:hover { background: #fee2e2; }
+
+    /* ── Scenario badge ───────────────────────────────────────────── */
+    .scenario-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Component area ───────────────────────────────────────────── */
+    .component-stage {
+      padding: 40px 24px;
+      display: flex;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--page-bg) 0%, var(--card-bg) 100%);
+      border-radius: 8px;
+      border: 1px dashed var(--card-border);
+      min-height: 120px;
+      align-items: flex-start;
+    }
+
+    /* ── Event log ────────────────────────────────────────────────── */
+    .event-log {
+      background: var(--log-bg);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 12px;
+      color: var(--log-text);
+      height: 200px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+
+    .event-log .log-line {
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      line-height: 1.5;
+      animation: fadeIn .2s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; } }
+
+    .log-time { color: #475569; margin-right: 10px; }
+    .log-event { color: #7dd3fc; font-weight: 600; margin-right: 8px; }
+    .log-detail { color: #a8daff; }
+    .log-empty { color: #334155; font-style: italic; }
+
+    /* ── Info pills ───────────────────────────────────────────────── */
+    .info-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .pill {
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* ── Code snippet ─────────────────────────────────────────────── */
+    .code-block {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    /* ── Kbd ──────────────────────────────────────────────────────── */
+    kbd {
+      display: inline-block;
+      padding: 2px 7px;
+      background: var(--page-bg);
+      border: 1px solid var(--card-border);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      font-family: "SF Mono", monospace;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* ── Status indicators ────────────────────────────────────────── */
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--neutral);
+      margin-right: 4px;
+    }
+    .status-dot.online { background: var(--success); }
+    .status-dot.error  { background: var(--error); }
+
+    /* ── Keyboard shortcut grid ───────────────────────────────────── */
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 14px;
+    }
+    .shortcut-row:last-child { border-bottom: none; }
+    .shortcut-keys { display: flex; gap: 4px; min-width: 140px; }
+    .shortcut-desc { color: var(--neutral); }
+
+    /* ── Delay slider ─────────────────────────────────────────────── */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+    input[type=range] { flex: 1; accent-color: var(--accent); }
+
+    /* ── Mobile tweak ─────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .page-header { padding: 12px 16px; }
+      .container { padding: 16px 12px 100px; }
+      .card { padding: 16px; }
+      .component-stage { padding: 24px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Page Header ─────────────────────────────────────────────────────── -->
+<header class="page-header" role="banner">
+  <h1>Banking Search — Web Component Demo</h1>
+  <div class="header-controls">
+    <!-- Theme toggle -->
+    <div role="group" aria-label="Component theme">
+      <button class="btn active" id="theme-light" onclick="setComponentTheme('light')">Light</button>
+      <button class="btn" id="theme-dark" onclick="setComponentTheme('dark')">Dark</button>
+      <button class="btn" id="theme-auto" onclick="setComponentTheme('auto')">Auto</button>
+    </div>
+    <!-- Page dark mode -->
+    <button class="btn" id="page-dark-toggle" onclick="togglePageDark()" aria-label="Toggle page dark mode">
+      🌓 Page Dark
+    </button>
+  </div>
+</header>
+
+<!-- ─── Main ────────────────────────────────────────────────────────────── -->
+<main class="container" id="main">
+
+  <!-- ── Live component ───────────────────────────────────────────────── -->
+  <section class="card" aria-labelledby="demo-heading">
+    <p class="card-title" id="demo-heading">Live Component</p>
+
+    <div class="info-bar" aria-live="polite" aria-label="Component status">
+      <span class="pill" id="status-pill">
+        <span class="status-dot online" id="status-dot"></span>
+        <span id="status-text">Online — Ready</span>
+      </span>
+      <span class="pill" id="filter-pill">Filter: all</span>
+      <span class="pill" id="results-pill">Results: —</span>
+    </div>
+
+    <div class="component-stage" role="region" aria-label="Component preview">
+      <!--
+        The actual custom element.
+        In production this script tag would point to the built dist file.
+        Here we inline the component implementation below.
+      -->
+      <banking-search
+        id="search"
+        placeholder="Search accounts, customers, transactions…"
+        theme="light"
+        min-chars="2"
+        debounce-ms="300"
+        highlight-matches
+        search-label="Search banking entities"
+        style="width: 100%; max-width: 560px;"
+      ></banking-search>
+    </div>
+  </section>
+
+  <!-- ── Scenarios ─────────────────────────────────────────────────────── -->
+  <section class="card" aria-labelledby="scenarios-heading">
+    <p class="card-title" id="scenarios-heading">Simulate Scenarios</p>
+    <p style="font-size:13px; color:var(--neutral); margin-bottom:16px;">
+      Click a scenario, then type in the search box to trigger it.
+    </p>
+
+    <div class="scenario-grid" role="group" aria-label="Test scenarios">
+      <button class="btn active" id="btn-normal" onclick="setScenario('normal')">Normal Results</button>
+      <button class="btn" id="btn-empty" onclick="setScenario('empty')">Empty Results</button>
+      <button class="btn" id="btn-loading-stuck" onclick="setScenario('loading-stuck')">Loading (stuck)</button>
+      <button class="btn btn-danger" id="btn-network" onclick="setScenario('network-error')">Network Error</button>
+      <button class="btn btn-danger" id="btn-timeout" onclick="setScenario('timeout')">Timeout Error</button>
+      <button class="btn btn-danger" id="btn-rate-limit" onclick="setScenario('rate-limited')">Rate Limited (429)</button>
+      <button class="btn btn-danger" id="btn-server" onclick="setScenario('server-error')">Server Error (500)</button>
+      <button class="btn" id="btn-offline" onclick="simulateOffline()">Simulate Offline</button>
+    </div>
+
+    <div class="slider-row">
+      <label for="delay-slider" style="white-space:nowrap; font-size:13px;">Simulated delay</label>
+      <input type="range" id="delay-slider" min="0" max="2000" step="100" value="600"
+             aria-valuemin="0" aria-valuemax="2000" aria-valuenow="600"
+             oninput="updateDelay(this.value)" />
+      <span id="delay-label" style="min-width:50px; font-size:13px; font-weight:600;">600ms</span>
+    </div>
+  </section>
+
+  <!-- ── Keyboard Reference ─────────────────────────────────────────────── -->
+  <section class="card" aria-labelledby="keyboard-heading">
+    <p class="card-title" id="keyboard-heading">Keyboard Navigation</p>
+    <div role="table" aria-label="Keyboard shortcuts">
+      <div class="shortcut-row">
+        <div class="shortcut-keys"><kbd>↓</kbd> <kbd>↑</kbd></div>
+        <div class="shortcut-desc">Navigate results / move into listbox from input</div>
+      </div>
+      <div class="shortcut-row">
+        <div class="shortcut-keys"><kbd>Enter</kbd></div>
+        <div class="shortcut-desc">Select highlighted result</div>
+      </div>
+      <div class="shortcut-row">
+        <div class="shortcut-keys"><kbd>Esc</kbd></div>
+        <div class="shortcut-desc">Close dropdown, return focus to input</div>
+      </div>
+      <div class="shortcut-row">
+        <div class="shortcut-keys"><kbd>Home</kbd> <kbd>End</kbd></div>
+        <div class="shortcut-desc">Jump to first / last result</div>
+      </div>
+      <div class="shortcut-row">
+        <div class="shortcut-keys"><kbd>Tab</kbd></div>
+        <div class="shortcut-desc">Close dropdown, continue tab order</div>
+      </div>
+      <div class="shortcut-row">
+        <div class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></div>
+        <div class="shortcut-desc">Navigate filter chips</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Event Log ──────────────────────────────────────────────────────── -->
+  <section class="card" aria-labelledby="log-heading">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <p class="card-title" id="log-heading" style="margin:0;">Event Log</p>
+      <button class="btn" onclick="clearLog()" aria-label="Clear event log">Clear</button>
+    </div>
+    <div class="event-log" id="event-log" role="log" aria-label="Component events" aria-live="polite">
+      <div class="log-empty">— events will appear here as you interact —</div>
+    </div>
+  </section>
+
+  <!-- ── Usage Code ─────────────────────────────────────────────────────── -->
+  <section class="card" aria-labelledby="usage-heading">
+    <p class="card-title" id="usage-heading">Usage (Host Integration Pattern)</p>
+    <pre class="code-block" tabindex="0" aria-label="Usage code example"><code><span style="color:#7dd3fc">const</span> el = document.querySelector(<span style="color:#86efac">'banking-search'</span>);
+<span style="color:#7dd3fc">let</span> controller;
+
+el.filters = [
+  { id: <span style="color:#86efac">'all'</span>, label: <span style="color:#86efac">'All'</span> },
+  { id: <span style="color:#86efac">'accounts'</span>,     label: <span style="color:#86efac">'Accounts'</span> },
+  { id: <span style="color:#86efac">'transactions'</span>, label: <span style="color:#86efac">'Transactions'</span> },
+  { id: <span style="color:#86efac">'customers'</span>,    label: <span style="color:#86efac">'Customers'</span> },
+];
+
+el.addEventListener(<span style="color:#86efac">'bs:search'</span>, async ({ detail }) => {
+  controller?.abort();
+  controller = <span style="color:#7dd3fc">new</span> AbortController();
+  el.setAttribute(<span style="color:#86efac">'loading'</span>, <span style="color:#86efac">''</span>);
+  el.removeAttribute(<span style="color:#86efac">'error'</span>);
+  <span style="color:#7dd3fc">try</span> {
+    <span style="color:#7dd3fc">const</span> data = <span style="color:#7dd3fc">await</span> fetchResults(detail.term, detail.filter, controller.signal);
+    el.results = data;
+  } <span style="color:#7dd3fc">catch</span> (err) {
+    <span style="color:#7dd3fc">if</span> (err.name === <span style="color:#86efac">'AbortError'</span>) <span style="color:#7dd3fc">return</span>;
+    el.setAttribute(<span style="color:#86efac">'error'</span>, classifyError(err)); <span style="color:#475569">// 'network' | 'timeout' | ...</span>
+  } <span style="color:#7dd3fc">finally</span> {
+    el.removeAttribute(<span style="color:#86efac">'loading'</span>);
+  }
+});
+
+el.addEventListener(<span style="color:#86efac">'bs:select'</span>, ({ detail }) => router.navigate(detail.item.url));
+el.addEventListener(<span style="color:#86efac">'bs:retry'</span>,  ({ detail }) => el.dispatchEvent(<span style="color:#7dd3fc">new</span> CustomEvent(<span style="color:#86efac">'bs:search'</span>, { detail })));
+</code></pre>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     INLINE COMPONENT IMPLEMENTATION
+     In production this would be: <script type="module" src="dist/banking-search.js"></script>
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+
+function debounce(fn, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+/** Safely highlight search term in text — XSS-safe, returns DocumentFragment */
+function highlightText(text, term) {
+  if (!term) return document.createTextNode(text);
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Use a capturing group so split() includes the matched segments in the result array
+  const splitRe = new RegExp(`(${escaped})`, 'gi');
+  // A separate stateless regex for membership testing — avoids lastIndex state issues
+  const matchRe = new RegExp(`^${escaped}$`, 'i');
+  const parts = text.split(splitRe);
+  const frag = document.createDocumentFragment();
+  for (const part of parts) {
+    if (!part) continue; // skip empty strings from split
+    if (matchRe.test(part)) {
+      const mark = document.createElement('mark');
+      mark.textContent = part;
+      frag.appendChild(mark);
+    } else {
+      frag.appendChild(document.createTextNode(part));
+    }
+  }
+  return frag;
+}
+
+/** Walk DOM ancestors to find all scrollable parents */
+function getScrollParents(el) {
+  const parents = [];
+  let node = el.parentElement;
+  while (node && node !== document.body) {
+    const style = getComputedStyle(node);
+    if (/auto|scroll/.test(style.overflow + style.overflowY + style.overflowX)) {
+      parents.push(node);
+    }
+    node = node.parentElement;
+  }
+  return parents;
+}
+
+// ── Custom Element ─────────────────────────────────────────────────────────
+
+class BankingSearch extends HTMLElement {
+  // Observed attributes drive attributeChangedCallback
+  static get observedAttributes() {
+    return [
+      'placeholder', 'theme', 'loading', 'disabled', 'error',
+      'highlight-matches', 'no-results-text', 'search-label',
+      'debounce-ms', 'min-chars', 'max-results'
+    ];
+  }
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+
+    // Internal state
+    this._results          = [];
+    this._filters          = [];
+    this._activeFilter     = 'all';
+    this._open             = false;
+    this._activeIndex      = -1;
+    this._offline          = false;
+    this._debounceTimer    = null;
+    this._rafId            = null;
+    this._scrollParents    = [];
+    // Overflow filter state
+    this._overflowOpen     = false;
+    this._overflowFilters  = [];   // filters currently hidden in More dropdown
+    this._moreBtnEl        = null; // reference to the rendered More button
+    this._cachedChipWidths = null; // measured chip widths — invalidated when filters change
+    this._cachedFilterKey  = null; // fingerprint of last measured filters
+
+    // Bound references — MUST use same reference for add/remove
+    this._onScroll      = () => this._schedulePositionUpdate();
+    this._onResize      = () => this._schedulePositionUpdate();
+    this._onOutsideClick = (e) => this._handleOutsideClick(e);
+    this._onOnline      = () => { this._offline = false; this._renderOfflineBanner(); };
+    this._onOffline     = () => { this._offline = true;  this._renderOfflineBanner(); };
+  }
+
+  // ── Lifecycle ────────────────────────────────────────────────────────────
+
+  connectedCallback() {
+    this._render();
+    this._attachListeners();
+    this._offline = !navigator.onLine;
+    if (this._offline) this._renderOfflineBanner();
+    // Layout filters that were set before the element connected to the DOM
+    if (this._filters.length) this._layoutFilterChips();
+  }
+
+  disconnectedCallback() {
+    // Close any open dropdowns so they don't linger in the DOM
+    this._closeOverflowDropdown();
+    // Cancel pending timers / frames
+    clearTimeout(this._debounceTimer);
+    cancelAnimationFrame(this._rafId);
+
+    // Remove all external listeners
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('resize', this._onResize);
+    window.removeEventListener('online',  this._onOnline);
+    window.removeEventListener('offline', this._onOffline);
+    document.removeEventListener('pointerdown', this._onOutsideClick);
+
+    // Remove scroll parents listeners
+    this._scrollParents.forEach(p =>
+      p.removeEventListener('scroll', this._onScroll)
+    );
+    this._scrollParents = [];
+
+    // Disconnect ResizeObserver
+    this._resizeObserver?.disconnect();
+  }
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    if (oldVal === newVal) return;
+    // Drive the state machine on every attribute change
+    if (this._input) this._syncState();
+  }
+
+  // ── Public properties ─────────────────────────────────────────────────────
+
+  set results(value) {
+    this._results = Array.isArray(value) ? value : [];
+    this._activeIndex = -1;
+    // _syncState() will decide what to render based on current loading/error attrs
+    if (this._input) this._syncState();
+  }
+
+  get results() { return this._results; }
+
+  set filters(value) {
+    this._filters = Array.isArray(value) ? value : [];
+    this._cachedChipWidths = null; // invalidate width cache — filters changed
+    this._cachedFilterKey  = null;
+    // Guard: _filterBar only exists after connectedCallback → _render()
+    if (this._filterBar) this._layoutFilterChips();
+  }
+
+  get filters() { return this._filters; }
+
+  // ── Rendering ─────────────────────────────────────────────────────────────
+
+  _render() {
+    // Use attribute values as initial defaults; _syncState() will keep them in sync thereafter
+    const placeholder = this.getAttribute('placeholder') ?? 'Search…';
+    const searchLabel = this.getAttribute('search-label') ?? 'Search';
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        /* ── Host ─────────────────────────────────────── */
+        :host {
+          display: block;
+          position: relative;
+          /* Do NOT use contain:layout — it makes position:fixed children
+             position relative to the host instead of the viewport */
+          contain: style;
+          font-family: var(--bs-font-family, system-ui, sans-serif);
+          font-size: var(--bs-font-size, 14px);
+          /* Light defaults */
+          --_bg:           var(--bs-bg, #ffffff);
+          --_surface:      var(--bs-surface, #f8f9fa);
+          --_border:       var(--bs-border, #dee2e6);
+          --_text:         var(--bs-text, #212529);
+          --_text-2:       var(--bs-text-secondary, #6c757d);
+          --_hover:        var(--bs-hover-bg, #e9ecef);
+          --_active:       var(--bs-active-bg, #cfe2ff);
+          --_primary:      var(--bs-primary, #0066cc);
+          --_error:        var(--bs-error, #dc3545);
+          --_warn:         var(--bs-warn, #d97706);
+          --_success:      var(--bs-success, #16a34a);
+          --_highlight:    var(--bs-highlight-color, #0044aa);
+          --_radius:       var(--bs-border-radius, 8px);
+          --_shadow:       var(--bs-shadow, 0 4px 20px rgba(0,0,0,.12));
+          --_z:            var(--bs-z-index, 9999);
+          --_max-h:        var(--bs-max-height, 400px);
+        }
+
+        /* Dark theme overrides */
+        :host([theme="dark"]) {
+          --_bg:      var(--bs-bg, #1a1d23);
+          --_surface: var(--bs-surface, #252a34);
+          --_border:  var(--bs-border, #383f4d);
+          --_text:    var(--bs-text, #f8f9fa);
+          --_text-2:  var(--bs-text-secondary, #a0aec0);
+          --_hover:   var(--bs-hover-bg, #2d3748);
+          --_active:  var(--bs-active-bg, #1e3a5f);
+          --_shadow:  var(--bs-shadow, 0 4px 24px rgba(0,0,0,.4));
+        }
+
+        @media (prefers-color-scheme: dark) {
+          :host([theme="auto"]) {
+            --_bg:      var(--bs-bg, #1a1d23);
+            --_surface: var(--bs-surface, #252a34);
+            --_border:  var(--bs-border, #383f4d);
+            --_text:    var(--bs-text, #f8f9fa);
+            --_text-2:  var(--bs-text-secondary, #a0aec0);
+            --_hover:   var(--bs-hover-bg, #2d3748);
+            --_active:  var(--bs-active-bg, #1e3a5f);
+            --_shadow:  var(--bs-shadow, 0 4px 24px rgba(0,0,0,.4));
+          }
+        }
+
+        /* ── Reduced motion ───────────────────────────── */
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after { transition: none !important; animation: none !important; }
+        }
+
+        /* ── Wrapper ──────────────────────────────────── */
+        .wrapper {
+          position: relative;
+          background: var(--_bg);
+          border: 1.5px solid var(--_border);
+          border-radius: var(--_radius);
+          transition: border-color .15s, box-shadow .15s;
+        }
+        .wrapper:focus-within {
+          border-color: var(--_primary);
+          box-shadow: 0 0 0 3px color-mix(in srgb, var(--_primary) 20%, transparent);
+          outline: none;
+        }
+
+        /* ── Input row ────────────────────────────────── */
+        .input-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 0 12px;
+          height: 48px;
+        }
+
+        .icon-search {
+          flex-shrink: 0;
+          color: var(--_text-2);
+          display: flex;
+          align-items: center;
+        }
+        .icon-search svg { width: 18px; height: 18px; }
+
+        input {
+          flex: 1;
+          border: none;
+          outline: none;
+          background: transparent;
+          color: var(--_text);
+          font-family: inherit;
+          font-size: inherit;
+          padding: 0;
+          min-width: 0;
+          /* Remove browser's default search cancel button */
+          -webkit-appearance: none;
+        }
+        input::placeholder { color: var(--_text-2); }
+        input::-webkit-search-cancel-button { display: none; }
+
+        /* Disable state */
+        :host([disabled]) .wrapper { opacity: .55; pointer-events: none; }
+
+        /* ── Clear button ─────────────────────────────── */
+        .btn-clear {
+          display: none;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          min-width: 28px;
+          border: none;
+          background: var(--_hover);
+          border-radius: 50%;
+          cursor: pointer;
+          color: var(--_text-2);
+          transition: background .15s, color .15s;
+          padding: 0;
+          flex-shrink: 0;
+        }
+        .btn-clear:hover { background: var(--_border); color: var(--_text); }
+        .btn-clear.visible { display: flex; }
+        .btn-clear svg { width: 14px; height: 14px; }
+
+        /* ── Spinner ──────────────────────────────────── */
+        .spinner {
+          display: none;
+          width: 18px;
+          height: 18px;
+          border: 2px solid var(--_border);
+          border-top-color: var(--_primary);
+          border-radius: 50%;
+          animation: spin .7s linear infinite;
+          flex-shrink: 0;
+        }
+        .spinner.visible { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Filter bar ───────────────────────────────── */
+        .filter-bar {
+          display: none;
+          gap: 6px;
+          padding: 6px 12px 8px;
+          border-top: 1px solid var(--_border);
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+        .filter-bar::-webkit-scrollbar { display: none; }
+        .filter-bar.has-filters { display: flex; }
+
+        .filter-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px 12px;
+          border-radius: 999px;
+          border: 1.5px solid var(--_border);
+          background: transparent;
+          color: var(--_text-2);
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background .12s, border-color .12s, color .12s;
+          min-height: 28px;
+        }
+        .filter-chip:hover { background: var(--_hover); border-color: var(--_primary); color: var(--_text); }
+        .filter-chip[aria-checked="true"] {
+          background: var(--_active);
+          border-color: var(--_primary);
+          color: var(--_primary);
+          font-weight: 600;
+        }
+        .filter-chip:focus-visible {
+          outline: 2px solid var(--_primary);
+          outline-offset: 2px;
+        }
+        .chip-count {
+          background: var(--_border);
+          border-radius: 999px;
+          padding: 0 5px;
+          font-size: 10px;
+          line-height: 16px;
+        }
+
+        /* ── More button ──────────────────────────────── */
+        .btn-more {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 4px 12px;
+          border-radius: 999px;
+          border: 1.5px solid var(--_border);
+          background: transparent;
+          color: var(--_text-2);
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background .12s, border-color .12s, color .12s;
+          min-height: 28px;
+          flex-shrink: 0;
+        }
+        .btn-more:hover { background: var(--_hover); border-color: var(--_primary); color: var(--_text); }
+        .btn-more[aria-expanded="true"],
+        .btn-more:hover { background: var(--_hover); border-color: var(--_primary); color: var(--_text); }
+        /* When an overflowed filter is currently active */
+        .btn-more.overflow-active {
+          border-color: var(--_primary);
+          color: var(--_primary);
+          font-weight: 600;
+        }
+        .btn-more:focus-visible { outline: 2px solid var(--_primary); outline-offset: 2px; }
+        .more-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: currentColor;
+          flex-shrink: 0;
+        }
+        .more-chevron { display: flex; align-items: center; transition: transform .15s; }
+        .btn-more[aria-expanded="true"] .more-chevron { transform: rotate(180deg); }
+
+        /* ── Overflow filter dropdown ─────────────────── */
+        .filter-overflow {
+          position: fixed;
+          z-index: calc(var(--_z) + 1);
+          background: var(--_bg);
+          border: 1.5px solid var(--_border);
+          border-radius: var(--_radius);
+          box-shadow: var(--_shadow);
+          min-width: 190px;
+          overflow: hidden;
+          display: none;
+          will-change: transform;
+          transform: translateZ(0);
+          padding: 4px 0;
+        }
+        .filter-overflow.open { display: block; }
+
+        /* Divider above overflow list */
+        .overflow-header {
+          padding: 6px 14px 4px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: .6px;
+          color: var(--_text-2);
+          border-bottom: 1px solid var(--_border);
+          margin-bottom: 4px;
+        }
+
+        .filter-overflow-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 9px 14px;
+          cursor: pointer;
+          font-size: 13px;
+          color: var(--_text);
+          transition: background .1s;
+          min-height: 44px; /* WCAG touch target */
+          outline: none;
+        }
+        .filter-overflow-item:hover { background: var(--_hover); }
+        .filter-overflow-item.active {
+          background: var(--_active);
+          color: var(--_primary);
+          font-weight: 600;
+        }
+        .filter-overflow-item:focus-visible {
+          outline: 2px solid var(--_primary);
+          outline-offset: -2px;
+        }
+        .overflow-item-label { flex: 1; }
+        /* Checkmark column — always occupies space so text doesn't jump */
+        .overflow-checkmark {
+          width: 16px;
+          flex-shrink: 0;
+          color: var(--_primary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity .1s;
+        }
+        .filter-overflow-item.active .overflow-checkmark { opacity: 1; }
+
+        /* ── Offline banner ───────────────────────────── */
+        .offline-banner {
+          display: none;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 12px;
+          background: color-mix(in srgb, var(--_warn) 12%, transparent);
+          border-top: 1px solid color-mix(in srgb, var(--_warn) 30%, transparent);
+          color: var(--_warn);
+          font-size: 12px;
+          font-weight: 500;
+          border-radius: 0 0 var(--_radius) var(--_radius);
+        }
+        .offline-banner.visible { display: flex; }
+        .offline-banner svg { flex-shrink: 0; }
+
+        /* ── Dropdown ─────────────────────────────────── */
+        .dropdown {
+          position: fixed;
+          z-index: var(--_z);
+          background: var(--_bg);
+          border: 1.5px solid var(--_border);
+          border-radius: var(--_radius);
+          box-shadow: var(--_shadow);
+          overflow: hidden;
+          display: none;
+          will-change: transform;
+          transform: translateZ(0);
+          max-height: var(--_max-h);
+          overflow-y: auto;
+          scrollbar-width: thin;
+        }
+        .dropdown.open { display: block; }
+
+        /* ── SR-only ──────────────────────────────────── */
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0,0,0,0);
+          white-space: nowrap;
+          border: 0;
+        }
+
+        /* ── Loading skeleton ─────────────────────────── */
+        .skeleton-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 16px;
+          border-bottom: 1px solid var(--_border);
+        }
+        .skeleton-item:last-child { border-bottom: none; }
+        .skel {
+          background: linear-gradient(90deg,
+            var(--_hover) 25%,
+            var(--_surface) 50%,
+            var(--_hover) 75%
+          );
+          background-size: 200% 100%;
+          animation: shimmer 1.4s ease infinite;
+          border-radius: 4px;
+        }
+        @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+        .skel-circle { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+        .skel-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .skel-line  { height: 12px; }
+        .skel-line.short { width: 55%; }
+
+        /* ── Group header ─────────────────────────────── */
+        .group-header {
+          padding: 6px 16px 4px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: .7px;
+          color: var(--_text-2);
+          border-bottom: 1px solid var(--_border);
+          background: var(--_surface);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .group-total { font-weight: 400; font-size: 11px; }
+
+        /* ── Result item ──────────────────────────────── */
+        .result-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 16px;
+          cursor: pointer;
+          border-bottom: 1px solid var(--_border);
+          transition: background .1s;
+          min-height: 48px; /* touch target */
+        }
+        .result-item:last-child { border-bottom: none; }
+        .result-item:hover,
+        .result-item.active { background: var(--_hover); }
+        .result-item[aria-selected="true"] { background: var(--_active); }
+        .result-item:focus { outline: none; background: var(--_hover); }
+        .result-item:focus-visible { outline: 2px solid var(--_primary); outline-offset: -2px; }
+
+        .result-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          background: var(--_surface);
+          border: 1px solid var(--_border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          font-size: 16px;
+        }
+
+        .result-body { flex: 1; min-width: 0; }
+        .result-title {
+          font-weight: 600;
+          color: var(--_text);
+          font-size: 14px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: block;
+        }
+        .result-title mark {
+          background: color-mix(in srgb, var(--_primary) 18%, transparent);
+          color: var(--_highlight);
+          border-radius: 2px;
+          padding: 0 1px;
+        }
+        .result-subtitle {
+          font-size: 12px;
+          color: var(--_text-2);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: block;
+          margin-top: 2px;
+        }
+
+        .result-meta {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+        .badge {
+          padding: 2px 8px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+        .badge-success { background: color-mix(in srgb, var(--_success) 15%, transparent); color: var(--_success); }
+        .badge-error   { background: color-mix(in srgb, var(--_error) 15%, transparent);   color: var(--_error); }
+        .badge-warn    { background: color-mix(in srgb, var(--_warn) 15%, transparent);    color: var(--_warn); }
+        .badge-neutral { background: var(--_hover); color: var(--_text-2); }
+
+        /* ── Empty state ──────────────────────────────── */
+        .empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 32px 24px;
+          gap: 8px;
+          color: var(--_text-2);
+          text-align: center;
+        }
+        .empty-state svg { opacity: .4; }
+        .empty-title { font-weight: 600; font-size: 14px; color: var(--_text); }
+        .empty-sub   { font-size: 12px; }
+
+        /* ── Error state ──────────────────────────────── */
+        .error-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          gap: 10px;
+          text-align: center;
+        }
+        .error-icon { font-size: 32px; }
+        .error-title { font-weight: 600; font-size: 14px; color: var(--_error); }
+        .error-sub   { font-size: 12px; color: var(--_text-2); max-width: 260px; }
+        .btn-retry {
+          margin-top: 4px;
+          padding: 7px 18px;
+          border-radius: 6px;
+          border: 1.5px solid var(--_primary);
+          background: transparent;
+          color: var(--_primary);
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background .15s;
+          min-height: 36px;
+        }
+        .btn-retry:hover { background: var(--_active); }
+        .btn-retry:focus-visible { outline: 2px solid var(--_primary); outline-offset: 2px; }
+      </style>
+
+      <!-- Screen-reader live region -->
+      <div class="sr-only" aria-live="polite" aria-atomic="true" id="sr-announce"></div>
+
+      <!-- Combobox wrapper -->
+      <div
+        class="wrapper"
+        role="combobox"
+        aria-expanded="false"
+        aria-haspopup="listbox"
+        aria-owns="listbox"
+        id="combobox"
+      >
+        <!-- Offline banner -->
+        <div class="offline-banner" id="offline-banner" role="status" aria-live="polite">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>
+          </svg>
+          You are offline — search unavailable
+        </div>
+
+        <!-- Input row -->
+        <div class="input-row">
+          <span class="icon-search" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input
+            type="search"
+            id="search-input"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="${placeholder}"
+            aria-label="${searchLabel}"
+            aria-autocomplete="list"
+            aria-controls="listbox"
+            aria-activedescendant=""
+            role="searchbox"
+          />
+          <span class="spinner" id="spinner" aria-hidden="true"></span>
+          <button class="btn-clear" id="btn-clear" type="button" aria-label="Clear search" tabindex="-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar" id="filter-bar" role="group" aria-label="Filter search results"></div>
+      </div>
+
+      <!-- Overflow filter dropdown (position: fixed, positioned by JS) -->
+      <div
+        class="filter-overflow"
+        id="filter-overflow"
+        role="listbox"
+        aria-label="Additional filter options"
+      ></div>
+
+      <!-- Results dropdown / listbox (position: fixed, positioned by JS) -->
+      <div
+        class="dropdown"
+        id="listbox"
+        role="listbox"
+        aria-label="Search results"
+        aria-busy="false"
+      ></div>
+    `;
+
+    // Cache DOM refs
+    this._input          = this.shadowRoot.getElementById('search-input');
+    this._clearBtn       = this.shadowRoot.getElementById('btn-clear');
+    this._spinner        = this.shadowRoot.getElementById('spinner');
+    this._filterBar      = this.shadowRoot.getElementById('filter-bar');
+    this._filterOverflow = this.shadowRoot.getElementById('filter-overflow');
+    this._listbox        = this.shadowRoot.getElementById('listbox');
+    this._combobox   = this.shadowRoot.getElementById('combobox');
+    this._srAnnounce = this.shadowRoot.getElementById('sr-announce');
+    this._offlineBanner = this.shadowRoot.getElementById('offline-banner');
+
+    // Initial state sync
+    this._syncState();
+  }
+
+  _attachListeners() {
+    // Input events
+    this._debouncedSearch = debounce(() => this._handleSearch(), parseInt(this.getAttribute('debounce-ms') ?? '300', 10));
+    this._input.addEventListener('input', () => {
+      const val = this._input.value;
+      this._clearBtn.classList.toggle('visible', val.length > 0);
+      this._debouncedSearch();
+    });
+    this._input.addEventListener('keydown', (e) => this._handleInputKeydown(e));
+
+    // Clear button
+    this._clearBtn.addEventListener('click', () => this._clear());
+
+    // Listbox keyboard
+    this._listbox.addEventListener('keydown', (e) => this._handleListboxKeydown(e));
+
+    // Click-outside (document level)
+    document.addEventListener('pointerdown', this._onOutsideClick);
+
+    // Window resize / scroll
+    window.addEventListener('resize', this._onResize, { passive: true });
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+
+    // Online / offline
+    window.addEventListener('online',  this._onOnline);
+    window.addEventListener('offline', this._onOffline);
+
+    // ResizeObserver on host — reposition dropdown AND re-layout filter chips
+    this._resizeObserver = new ResizeObserver(() => {
+      this._schedulePositionUpdate();
+      this._layoutFilterChips();
+    });
+    this._resizeObserver.observe(this);
+
+    // Scroll parents
+    this._scrollParents = getScrollParents(this);
+    this._scrollParents.forEach(p =>
+      p.addEventListener('scroll', this._onScroll, { passive: true })
+    );
+  }
+
+  // ── Event handlers ────────────────────────────────────────────────────────
+
+  _handleSearch() {
+    const term    = this._input.value.trim();
+    const minChar = parseInt(this.getAttribute('min-chars') ?? '2', 10);
+    if (term.length < minChar) {
+      // Clear stale results so they don't re-appear when loading completes
+      this._results = [];
+      this._syncState(); // closes dropdown since no term/results
+      return;
+    }
+    this._emit('bs:search', { term, filter: this._activeFilter, requestId: this._newRequestId() });
+  }
+
+  _handleOutsideClick(e) {
+    if (!this.contains(e.target)) {
+      this._closeDropdown();
+      this._closeOverflowDropdown();
+    }
+  }
+
+  _handleInputKeydown(e) {
+    if (!this._open) return;
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        this._moveFocus(0);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        this._moveFocus(this._getOptions().length - 1);
+        break;
+      case 'Escape':
+        e.preventDefault();
+        this._closeDropdown();
+        break;
+    }
+  }
+
+  _handleListboxKeydown(e) {
+    const options = this._getOptions();
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        this._moveFocus(Math.min(this._activeIndex + 1, options.length - 1));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (this._activeIndex <= 0) { this._input.focus(); this._activeIndex = -1; return; }
+        this._moveFocus(this._activeIndex - 1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (this._activeIndex >= 0) this._selectOption(options[this._activeIndex]);
+        break;
+      case 'Escape':
+        e.preventDefault();
+        this._closeDropdown();
+        this._input.focus();
+        break;
+      case 'Home':
+        e.preventDefault();
+        this._moveFocus(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        this._moveFocus(options.length - 1);
+        break;
+      case 'Tab':
+        this._closeDropdown();
+        break;
+    }
+  }
+
+  // ── Focus management ──────────────────────────────────────────────────────
+
+  _getOptions() {
+    return Array.from(this._listbox.querySelectorAll('[role="option"]'));
+  }
+
+  _moveFocus(index) {
+    const options = this._getOptions();
+    if (!options.length) return;
+    this._activeIndex = Math.max(0, Math.min(index, options.length - 1));
+    options.forEach((opt, i) => {
+      const active = i === this._activeIndex;
+      opt.classList.toggle('active', active);
+      opt.setAttribute('aria-selected', String(active));
+    });
+    const activeOpt = options[this._activeIndex];
+    activeOpt.focus();
+    this._input.setAttribute('aria-activedescendant', activeOpt.id);
+  }
+
+  // ── Result selection ──────────────────────────────────────────────────────
+
+  _selectOption(el) {
+    const id   = el.dataset.id;
+    const item = this._flatItems().find(r => r.id === id);
+    if (!item) return;
+    this._emit('bs:select', { item });
+    this._input.value = item.title;
+    this._clearBtn.classList.add('visible');
+    this._closeDropdown();
+    this._input.focus();
+  }
+
+  _flatItems() {
+    if (!this._results.length) return [];
+    if ('groupId' in this._results[0]) {
+      return this._results.flatMap(g => g.items ?? []);
+    }
+    return this._results;
+  }
+
+  // ── Clear ─────────────────────────────────────────────────────────────────
+
+  _clear() {
+    this._input.value = '';
+    this._clearBtn.classList.remove('visible');
+    this._results = [];
+    this.removeAttribute('loading');
+    this.removeAttribute('error');
+    this._emit('bs:clear', {});
+    this._syncState(); // will close dropdown since term='' and no results
+    this._input.focus();
+  }
+
+  // ── Dropdown open/close ───────────────────────────────────────────────────
+
+  _openDropdown() {
+    const wasOpen = this._open;
+    this._open = true;
+    this._listbox.classList.add('open');
+    this._combobox.setAttribute('aria-expanded', 'true');
+    this._schedulePositionUpdate();
+    // Only emit once per open transition — _syncState() calls this repeatedly
+    if (!wasOpen) this._emit('bs:open', {});
+  }
+
+  _closeDropdown() {
+    if (!this._open) return; // already closed — nothing to do
+    this._open = false;
+    this._listbox.classList.remove('open');
+    this._combobox.setAttribute('aria-expanded', 'false');
+    this._activeIndex = -1;
+    this._input.removeAttribute('aria-activedescendant');
+    this._emit('bs:close', {});
+  }
+
+  // ── Positioning engine ────────────────────────────────────────────────────
+
+  _schedulePositionUpdate() {
+    cancelAnimationFrame(this._rafId);
+    this._rafId = requestAnimationFrame(() => this._updatePosition());
+  }
+
+  _updatePosition() {
+    if (!this._open) return;
+    // All reads first
+    const rect      = this._combobox.getBoundingClientRect();
+    const vpHeight  = window.innerHeight;
+    const vpWidth   = window.innerWidth;
+    const ddHeight  = Math.min(this._listbox.scrollHeight, parseInt(getComputedStyle(this).getPropertyValue('--_max-h') || '400', 10));
+    const spaceBelow = vpHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    // Decide direction
+    const openDown = spaceBelow >= ddHeight || spaceBelow >= spaceAbove;
+    let top  = openDown ? rect.bottom + 4 : rect.top - ddHeight - 4;
+    let left = rect.left;
+    // Clamp to viewport
+    const right = left + rect.width;
+    if (right > vpWidth - 8) left = vpWidth - rect.width - 8;
+    if (left < 8) left = 8;
+    if (top < 8)  top  = 8;
+    // All writes after reads
+    this._listbox.style.top   = `${top}px`;
+    this._listbox.style.left  = `${left}px`;
+    this._listbox.style.width = `${rect.width}px`;
+  }
+
+  // ── Single state machine ──────────────────────────────────────────────────
+  // One method drives ALL state transitions. Priority: error > loading > results > empty > idle.
+  // Called from: attributeChangedCallback, results setter, _render (initial).
+
+  _syncState() {
+    if (!this._input) return;
+    const loading  = this.hasAttribute('loading');
+    const error    = this.getAttribute('error');
+    const disabled = this.hasAttribute('disabled');
+    const term     = this._input.value.trim();
+    const minChar  = parseInt(this.getAttribute('min-chars') ?? '2', 10);
+
+    // Sync input meta (handles placeholder/aria-label attribute changes too)
+    this._input.placeholder = this.getAttribute('placeholder') ?? 'Search…';
+    this._input.setAttribute('aria-label', this.getAttribute('search-label') ?? 'Search');
+    this._input.disabled = disabled;
+    this._input.setAttribute('aria-disabled', String(disabled));
+
+    // Spinner: show only while loading and no error has replaced it
+    this._spinner.classList.toggle('visible', loading && !error);
+    this._listbox.setAttribute('aria-busy', String(loading));
+
+    if (error) {
+      // Error takes highest priority — always replace whatever is in the dropdown
+      this._renderError(error, term);
+      this._openDropdown();
+    } else if (loading) {
+      // Loading skeleton — shown while host awaits API response
+      this._renderLoading();
+      this._openDropdown();
+    } else if (this._results.length > 0) {
+      // We have results — render them
+      this._renderResults(term);
+      this._updateAriaLive();
+      this._openDropdown();
+    } else if (term.length >= minChar) {
+      // Search was valid but returned nothing
+      this._renderEmpty();
+      this._updateAriaLive();
+      this._openDropdown();
+    } else {
+      // Term too short or cleared — close
+      this._closeDropdown();
+    }
+  }
+
+  _renderLoading() {
+    this._listbox.setAttribute('aria-busy', 'true');
+    const skeletons = Array.from({ length: 4 }, () => `
+      <div class="skeleton-item" aria-hidden="true">
+        <div class="skel skel-circle"></div>
+        <div class="skel-lines">
+          <div class="skel skel-line"></div>
+          <div class="skel skel-line short"></div>
+        </div>
+      </div>
+    `).join('');
+    this._listbox.innerHTML = skeletons;
+  }
+
+  _renderResults(term) {
+    this._listbox.setAttribute('aria-busy', 'false');
+    const highlight = this.hasAttribute('highlight-matches');
+    const maxResults = parseInt(this.getAttribute('max-results') ?? '10', 10);
+    const isGrouped  = this._results.length && 'groupId' in this._results[0];
+
+    this._listbox.innerHTML = '';
+
+    if (isGrouped) {
+      this._results.forEach(group => {
+        const items = group.items.slice(0, maxResults);
+        if (!items.length) return;
+
+        const header = document.createElement('div');
+        header.className = 'group-header';
+        header.setAttribute('role', 'presentation');
+        header.innerHTML = `
+          <span>${group.label}</span>
+          ${group.total ? `<span class="group-total">${group.total} total</span>` : ''}
+        `;
+        this._listbox.appendChild(header);
+
+        items.forEach(item => this._listbox.appendChild(this._createResultEl(item, term, highlight)));
+      });
+    } else {
+      this._results.slice(0, maxResults).forEach(item =>
+        this._listbox.appendChild(this._createResultEl(item, term, highlight))
+      );
+    }
+  }
+
+  _createResultEl(item, term, highlight) {
+    const el = document.createElement('div');
+    el.className = 'result-item';
+    el.setAttribute('role', 'option');
+    el.setAttribute('id', `result-${item.id}`);
+    el.setAttribute('aria-selected', 'false');
+    el.setAttribute('tabindex', '-1');
+    el.dataset.id = item.id;
+
+    // Icon
+    const icon = document.createElement('span');
+    icon.className = 'result-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = this._iconFor(item.type);
+    el.appendChild(icon);
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'result-body';
+
+    const titleEl = document.createElement('span');
+    titleEl.className = 'result-title';
+    if (highlight && term) {
+      titleEl.appendChild(highlightText(item.title, term));
+    } else {
+      titleEl.textContent = item.title;
+    }
+    body.appendChild(titleEl);
+
+    if (item.subtitle) {
+      const sub = document.createElement('span');
+      sub.className = 'result-subtitle';
+      sub.textContent = item.subtitle;
+      body.appendChild(sub);
+    }
+    el.appendChild(body);
+
+    // Badge
+    if (item.badge) {
+      const meta = document.createElement('div');
+      meta.className = 'result-meta';
+      const badge = document.createElement('span');
+      badge.className = `badge badge-${item.badge.variant ?? 'neutral'}`;
+      badge.textContent = item.badge.label;
+      meta.appendChild(badge);
+      el.appendChild(meta);
+    }
+
+    // Interaction
+    el.addEventListener('click', () => this._selectOption(el));
+    el.addEventListener('mouseenter', () => {
+      this._getOptions().forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+      this._activeIndex = this._getOptions().indexOf(el);
+    });
+
+    return el;
+  }
+
+  _iconFor(type) {
+    const icons = {
+      account:          '🏦',
+      transaction:      '↕️',
+      customer:         '👤',
+      card:             '💳',
+      loan:             '📋',
+      beneficiary:      '👥',
+      'standing-order': '🔁',
+      investment:       '📈',
+      fx:               '💱',
+      payment:          '💸',
+      insurance:        '🛡️',
+    };
+    return icons[type] ?? '🔍';
+  }
+
+  _renderEmpty() {
+    this._listbox.setAttribute('aria-busy', 'false');
+    const text = this.getAttribute('no-results-text') ?? 'No results found';
+    this._listbox.innerHTML = `
+      <div class="empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span class="empty-title">${text}</span>
+        <span class="empty-sub">Try a different term or adjust your filters</span>
+      </div>
+    `;
+  }
+
+  _renderError(code, term) {
+    this._listbox.setAttribute('aria-busy', 'false');
+    const messages = {
+      'network':     { title: 'Connection failed',       sub: 'Check your network connection and try again.' },
+      'timeout':     { title: 'Request timed out',       sub: 'Search is taking too long. Try a more specific term.' },
+      'rate-limited':{ title: 'Too many requests',       sub: 'Please wait a moment before searching again.' },
+      'unauthorized':{ title: 'Access denied',           sub: 'You don\'t have permission to perform this search.' },
+      'server':      { title: 'Service unavailable',     sub: 'Our servers are having issues. Please try again shortly.' },
+      'unknown':     { title: 'Something went wrong',    sub: 'An unexpected error occurred. Please try again.' },
+    };
+    const msg = messages[code] ?? messages['unknown'];
+
+    this._listbox.innerHTML = `
+      <div class="error-state" role="alert" aria-live="assertive">
+        <div class="error-icon" aria-hidden="true">⚠️</div>
+        <span class="error-title">${msg.title}</span>
+        <span class="error-sub">${msg.sub}</span>
+        <button class="btn-retry" id="btn-retry" type="button">Try again</button>
+      </div>
+    `;
+
+    this._listbox.querySelector('#btn-retry')?.addEventListener('click', () => {
+      this.removeAttribute('error');
+      this._emit('bs:retry', { term, filter: this._activeFilter });
+    });
+  }
+
+  // ── Filter layout (overflow-aware) ───────────────────────────────────────
+
+  _layoutFilterChips() {
+    if (!this._filterBar || !this._filters.length) {
+      if (this._filterBar) {
+        this._filterBar.classList.remove('has-filters');
+        this._filterBar.innerHTML = '';
+      }
+      return;
+    }
+
+    this._filterBar.classList.add('has-filters');
+    const barWidth = this._filterBar.clientWidth;
+    if (barWidth === 0) return; // not yet laid out — ResizeObserver will call again
+
+    // ── Step 1: Measure chip widths ────────────────────────────────────────
+    // Use a fingerprint to avoid re-measuring when only active filter changes
+    const filterKey = this._filters.map(f => `${f.id}:${f.label}:${f.count ?? ''}`).join('|');
+    if (this._cachedFilterKey !== filterKey) {
+      const measure = document.createElement('div');
+      measure.style.cssText = [
+        'position:absolute', 'top:-9999px', 'left:0',
+        'visibility:hidden', 'display:flex', 'gap:6px',
+        'pointer-events:none', 'white-space:nowrap'
+      ].join(';');
+      this.shadowRoot.appendChild(measure);
+
+      // Render all chips and More button off-screen to measure (all reads before removing)
+      const chips   = this._filters.map(f => { const c = this._makeChipEl(f, false); measure.appendChild(c); return c; });
+      const moreBtn = this._makeMoreBtnEl(99, false);
+      measure.appendChild(moreBtn);
+
+      // Single layout pass — read all widths
+      this._cachedChipWidths = chips.map(c => Math.ceil(c.getBoundingClientRect().width) + 6 /* gap */);
+      this._cachedMoreBtnWidth = Math.ceil(moreBtn.getBoundingClientRect().width) + 6;
+      measure.remove();
+      this._cachedFilterKey = filterKey;
+    }
+
+    // ── Step 2: Determine split point ─────────────────────────────────────
+    // Walk chips left-to-right; when remaining chips would need a More button,
+    // factor its width into the budget.
+    let usedWidth  = 0;
+    let splitIndex = this._filters.length; // assume all fit
+
+    for (let i = 0; i < this._cachedChipWidths.length; i++) {
+      const chipW   = this._cachedChipWidths[i];
+      const hasMore = i < this._cachedChipWidths.length - 1; // chips still remaining after i
+      const budget  = barWidth - (hasMore ? this._cachedMoreBtnWidth : 0);
+      if (usedWidth + chipW > budget) {
+        splitIndex = i;
+        break;
+      }
+      usedWidth += chipW;
+    }
+
+    const visible  = this._filters.slice(0, splitIndex);
+    const overflow = this._filters.slice(splitIndex);
+    this._overflowFilters = overflow;
+
+    // ── Step 3: Rebuild filter bar (single DOM write) ─────────────────────
+    this._filterBar.innerHTML = '';
+    this._moreBtnEl = null;
+
+    visible.forEach(filter => {
+      this._filterBar.appendChild(this._makeChipEl(filter, filter.id === this._activeFilter));
+    });
+
+    if (overflow.length) {
+      const overflowHasActive = overflow.some(f => f.id === this._activeFilter);
+      const moreBtn = this._makeMoreBtnEl(overflow.length, overflowHasActive);
+      this._filterBar.appendChild(moreBtn);
+      this._moreBtnEl = moreBtn;
+    } else {
+      // All chips visible — close overflow dropdown if open
+      this._closeOverflowDropdown();
+    }
+
+    this._updateFilterTabindex();
+  }
+
+  // Creates a single visible filter chip element
+  _makeChipEl(filter, isActive) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'filter-chip';
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('aria-checked', String(isActive ?? filter.id === this._activeFilter));
+    btn.setAttribute('tabindex', '-1'); // roving tabindex — set later in _updateFilterTabindex
+    btn.dataset.filterId = filter.id;
+
+    const label = document.createElement('span');
+    label.textContent = filter.label;
+    btn.appendChild(label);
+
+    if (filter.count != null) {
+      const count = document.createElement('span');
+      count.className = 'chip-count';
+      count.setAttribute('aria-label', `${filter.count} results`);
+      count.textContent = filter.count;
+      btn.appendChild(count);
+    }
+
+    btn.addEventListener('click', () => this._setFilter(filter.id));
+    btn.addEventListener('keydown', (e) => this._handleVisibleChipKeydown(e));
+    return btn;
+  }
+
+  // Creates the "More (N) ▾" overflow trigger button
+  _makeMoreBtnEl(count, overflowActive) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-more' + (overflowActive ? ' overflow-active' : '');
+    btn.setAttribute('tabindex', '-1');
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', 'filter-overflow');
+
+    // Build a descriptive label for screen readers
+    const activeOverflow = this._overflowFilters.find(f => f.id === this._activeFilter);
+    const srLabel = activeOverflow
+      ? `More filters, ${count} additional. Current filter: ${activeOverflow.label}`
+      : `More filters, ${count} additional`;
+    btn.setAttribute('aria-label', srLabel);
+
+    if (overflowActive) {
+      const dot = document.createElement('span');
+      dot.className = 'more-dot';
+      dot.setAttribute('aria-hidden', 'true');
+      btn.appendChild(dot);
+    }
+
+    const text = document.createTextNode(`More (${count})`);
+    btn.appendChild(text);
+
+    const chevron = document.createElement('span');
+    chevron.className = 'more-chevron';
+    chevron.setAttribute('aria-hidden', 'true');
+    chevron.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    btn.appendChild(chevron);
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this._toggleOverflowDropdown();
+    });
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this._toggleOverflowDropdown();
+      } else if (e.key === 'Escape') {
+        this._closeOverflowDropdown();
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        this._handleVisibleChipKeydown(e);
+      }
+    });
+    return btn;
+  }
+
+  // Roving tabindex across visible chips + More button
+  _updateFilterTabindex() {
+    const items = Array.from(this._filterBar.querySelectorAll('button'));
+    if (!items.length) return;
+    // Prefer the checked chip; fall back to More button if active is in overflow; else first item
+    const checkedChip    = items.find(b => b.getAttribute('aria-checked') === 'true');
+    const activeInOver   = this._overflowFilters.some(f => f.id === this._activeFilter);
+    const defaultFocusEl = checkedChip ?? (activeInOver ? this._moreBtnEl : null) ?? items[0];
+
+    items.forEach(b => b.setAttribute('tabindex', b === defaultFocusEl ? '0' : '-1'));
+  }
+
+  // Arrow key navigation across visible chips + More button (roving tabindex)
+  _handleVisibleChipKeydown(e) {
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.key)) return;
+    e.preventDefault();
+    const items = Array.from(this._filterBar.querySelectorAll('button'));
+    const idx   = items.indexOf(e.currentTarget);
+    const next  = e.key === 'ArrowRight' || e.key === 'ArrowDown'
+      ? items[(idx + 1) % items.length]
+      : items[(idx - 1 + items.length) % items.length];
+    items.forEach(b => b.setAttribute('tabindex', '-1'));
+    next.setAttribute('tabindex', '0');
+    next.focus();
+  }
+
+  // ── Overflow dropdown ─────────────────────────────────────────────────────
+
+  _toggleOverflowDropdown() {
+    this._overflowOpen ? this._closeOverflowDropdown() : this._openOverflowDropdown();
+  }
+
+  _openOverflowDropdown() {
+    if (!this._moreBtnEl || !this._overflowFilters.length) return;
+    this._overflowOpen = true;
+    this._moreBtnEl.setAttribute('aria-expanded', 'true');
+
+    // Build the dropdown items
+    const el = this._filterOverflow;
+    el.innerHTML = '';
+
+    const header = document.createElement('div');
+    header.className = 'overflow-header';
+    header.setAttribute('aria-hidden', 'true');
+    header.textContent = 'More Filters';
+    el.appendChild(header);
+
+    this._overflowFilters.forEach((filter, i) => {
+      const isActive = filter.id === this._activeFilter;
+      const item = document.createElement('div');
+      item.className = 'filter-overflow-item' + (isActive ? ' active' : '');
+      item.setAttribute('role', 'option');
+      item.setAttribute('aria-selected', String(isActive));
+      item.setAttribute('tabindex', '-1');
+      item.dataset.filterId = filter.id;
+      item.id = `overflow-opt-${filter.id}`;
+
+      const labelEl = document.createElement('span');
+      labelEl.className = 'overflow-item-label';
+      labelEl.textContent = filter.label;
+      item.appendChild(labelEl);
+
+      if (filter.count != null) {
+        const cnt = document.createElement('span');
+        cnt.className = 'chip-count';
+        cnt.setAttribute('aria-label', `${filter.count} results`);
+        cnt.textContent = filter.count;
+        item.appendChild(cnt);
+      }
+
+      // Checkmark — always present for consistent layout, visible only when active
+      const check = document.createElement('span');
+      check.className = 'overflow-checkmark';
+      check.setAttribute('aria-hidden', 'true');
+      check.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      item.appendChild(check);
+
+      item.addEventListener('click', () => {
+        this._setFilter(filter.id);
+        this._closeOverflowDropdown();
+        this._moreBtnEl?.focus();
+      });
+      item.addEventListener('keydown', (e) => this._handleOverflowKeydown(e, i));
+      el.appendChild(item);
+    });
+
+    el.classList.add('open');
+
+    // Position the dropdown below the More button (fixed coords)
+    requestAnimationFrame(() => {
+      const rect    = this._moreBtnEl.getBoundingClientRect();
+      const ddWidth = el.offsetWidth;
+      // Align right edge of dropdown with right edge of More button
+      let left = rect.right - ddWidth;
+      if (left < 8) left = 8;
+      const spaceBelow = window.innerHeight - rect.bottom - 8;
+      const spaceAbove = rect.top - 8;
+      const top = (spaceBelow >= el.offsetHeight || spaceBelow >= spaceAbove)
+        ? rect.bottom + 4
+        : rect.top - el.offsetHeight - 4;
+      el.style.top  = `${top}px`;
+      el.style.left = `${left}px`;
+
+      // Focus the active item, else the first item
+      const items      = Array.from(el.querySelectorAll('[role="option"]'));
+      const activeItem = el.querySelector('[aria-selected="true"]') ?? items[0];
+      if (activeItem) {
+        activeItem.setAttribute('tabindex', '0');
+        activeItem.focus();
+      }
+    });
+  }
+
+  _closeOverflowDropdown() {
+    if (!this._overflowOpen) return;
+    this._overflowOpen = false;
+    this._filterOverflow.classList.remove('open');
+    this._filterOverflow.innerHTML = '';
+    this._moreBtnEl?.setAttribute('aria-expanded', 'false');
+  }
+
+  _handleOverflowKeydown(e, index) {
+    const items = Array.from(this._filterOverflow.querySelectorAll('[role="option"]'));
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        this._focusOverflowItem(items, (index + 1) % items.length);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        this._focusOverflowItem(items, (index - 1 + items.length) % items.length);
+        break;
+      case 'Home':
+        e.preventDefault();
+        this._focusOverflowItem(items, 0);
+        break;
+      case 'End':
+        e.preventDefault();
+        this._focusOverflowItem(items, items.length - 1);
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        this._setFilter(this._overflowFilters[index].id);
+        this._closeOverflowDropdown();
+        this._moreBtnEl?.focus();
+        break;
+      case 'Escape':
+        e.preventDefault();
+        this._closeOverflowDropdown();
+        this._moreBtnEl?.focus();
+        break;
+      case 'Tab':
+        // Let focus leave naturally — close the dropdown
+        this._closeOverflowDropdown();
+        break;
+    }
+  }
+
+  _focusOverflowItem(items, index) {
+    items.forEach((item, i) => item.setAttribute('tabindex', i === index ? '0' : '-1'));
+    items[index].focus();
+  }
+
+  _setFilter(id) {
+    this._activeFilter = id;
+    // Re-layout chips to update active highlights on both visible and More button
+    this._layoutFilterChips();
+    this._emit('bs:filter-change', { filter: id });
+    // Announce filter change to screen readers
+    this._srAnnounce.textContent = `Filter changed to ${this._filters.find(f => f.id === id)?.label ?? id}`;
+    setTimeout(() => { this._srAnnounce.textContent = ''; }, 1500);
+    if (this._input.value.trim().length >= parseInt(this.getAttribute('min-chars') ?? '2', 10)) {
+      this._emit('bs:search', { term: this._input.value.trim(), filter: id, requestId: this._newRequestId() });
+    }
+  }
+
+  _renderOfflineBanner() {
+    this._offlineBanner?.classList.toggle('visible', this._offline);
+  }
+
+  // ── ARIA live ─────────────────────────────────────────────────────────────
+
+  _updateAriaLive() {
+    const count = this._flatItems().length;
+    this._srAnnounce.textContent = count === 0
+      ? 'No results found'
+      : `${count} result${count === 1 ? '' : 's'} found`;
+    // Clear after announcement so it re-triggers next time
+    setTimeout(() => { this._srAnnounce.textContent = ''; }, 1500);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  _emit(name, detail) {
+    this.dispatchEvent(new CustomEvent(name, {
+      detail,
+      bubbles: true,
+      composed: true,
+    }));
+  }
+
+  _newRequestId() {
+    return typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random()}`;
+  }
+}
+
+// Register the custom element
+customElements.define('banking-search', BankingSearch);
+
+// ─── Mock data ─────────────────────────────────────────────────────────────
+
+const MOCK_DATA = [
+  // Accounts
+  { id: 'acc-001', type: 'account', title: 'Primary Checking',        subtitle: '****4821 · Chase Bank',       badge: { label: 'Active',  variant: 'success' } },
+  { id: 'acc-002', type: 'account', title: 'Premium Savings',         subtitle: '****9102 · Chase Bank',       badge: { label: 'Active',  variant: 'success' } },
+  { id: 'acc-003', type: 'account', title: 'Business Checking Pro',   subtitle: '****3376 · Wells Fargo',      badge: { label: 'Active',  variant: 'success' } },
+  { id: 'acc-004', type: 'account', title: 'Old Savings Account',     subtitle: '****0012 · Bank of America',  badge: { label: 'Closed',  variant: 'neutral' } },
+  { id: 'acc-005', type: 'account', title: 'Emergency Fund',          subtitle: '****5543 · Ally Bank',        badge: { label: 'Active',  variant: 'success' } },
+  { id: 'acc-006', type: 'account', title: 'Joint Current Account',   subtitle: '****7721 · HSBC',             badge: { label: 'Active',  variant: 'success' } },
+
+  // Transactions
+  { id: 'txn-001', type: 'transaction', title: 'Amazon Purchase',          subtitle: '15 Mar 2026 · Debit',   badge: { label: '-$234.99',  variant: 'error'   } },
+  { id: 'txn-002', type: 'transaction', title: 'Salary Deposit',           subtitle: '1 Mar 2026 · Credit',   badge: { label: '+$5,200',   variant: 'success' } },
+  { id: 'txn-003', type: 'transaction', title: 'Netflix Subscription',     subtitle: '12 Mar 2026 · Debit',   badge: { label: '-$15.99',   variant: 'error'   } },
+  { id: 'txn-004', type: 'transaction', title: 'Wire Transfer — Johnson',  subtitle: '8 Mar 2026 · Debit',    badge: { label: '-$2,000',   variant: 'warn'    } },
+  { id: 'txn-005', type: 'transaction', title: 'ATM Withdrawal',           subtitle: '5 Mar 2026 · Debit',    badge: { label: '-$200',     variant: 'error'   } },
+  { id: 'txn-006', type: 'transaction', title: 'Apple Pay — Starbucks',    subtitle: '28 Mar 2026 · Debit',   badge: { label: '-$6.75',    variant: 'error'   } },
+  { id: 'txn-007', type: 'transaction', title: 'Dividend Payment',         subtitle: '20 Mar 2026 · Credit',  badge: { label: '+$312.00',  variant: 'success' } },
+
+  // Customers
+  { id: 'cus-001', type: 'customer', title: 'James Whitfield',      subtitle: 'ID #CUS-29481 · Premier',   badge: { label: 'VIP',     variant: 'warn'    } },
+  { id: 'cus-002', type: 'customer', title: 'Sarah Chen',           subtitle: 'ID #CUS-11034 · Standard',  badge: { label: 'Active',  variant: 'success' } },
+  { id: 'cus-003', type: 'customer', title: 'Marcus Thompson',      subtitle: 'ID #CUS-44821 · Standard',  badge: { label: 'Active',  variant: 'success' } },
+  { id: 'cus-004', type: 'customer', title: 'Priya Acharya',        subtitle: 'ID #CUS-78320 · Premier',   badge: { label: 'VIP',     variant: 'warn'    } },
+  { id: 'cus-005', type: 'customer', title: 'David Okafor',         subtitle: 'ID #CUS-55102 · Business',  badge: { label: 'Active',  variant: 'success' } },
+  { id: 'cus-006', type: 'customer', title: 'Elena Vasquez',        subtitle: 'ID #CUS-63017 · Standard',  badge: { label: 'Frozen',  variant: 'error'   } },
+
+  // Cards
+  { id: 'crd-001', type: 'card', title: 'Platinum Visa',        subtitle: '****1234 · Expires 09/27',  badge: { label: 'Active',   variant: 'success' } },
+  { id: 'crd-002', type: 'card', title: 'Business Amex Gold',   subtitle: '****5678 · Expires 03/26',  badge: { label: 'Active',   variant: 'success' } },
+  { id: 'crd-003', type: 'card', title: 'Rewards Mastercard',   subtitle: '****9012 · Expires 11/25',  badge: { label: 'Expired',  variant: 'error'   } },
+  { id: 'crd-004', type: 'card', title: 'Travel Debit Card',    subtitle: '****3344 · Expires 06/28',  badge: { label: 'Active',   variant: 'success' } },
+  { id: 'crd-005', type: 'card', title: 'Virtual Card — Shop',  subtitle: '****8801 · Expires 12/26',  badge: { label: 'Blocked',  variant: 'warn'    } },
+
+  // Loans
+  { id: 'lon-001', type: 'loan', title: 'Home Mortgage',         subtitle: 'LN-88210 · 30yr Fixed 6.5%',   badge: { label: 'Current',  variant: 'success' } },
+  { id: 'lon-002', type: 'loan', title: 'Auto Loan',             subtitle: 'LN-45123 · 5yr Fixed 7.2%',    badge: { label: 'Current',  variant: 'success' } },
+  { id: 'lon-003', type: 'loan', title: 'Personal Loan',         subtitle: 'LN-33001 · 3yr Fixed 9.1%',    badge: { label: 'Overdue',  variant: 'error'   } },
+  { id: 'lon-004', type: 'loan', title: 'Student Loan Refinance',subtitle: 'LN-12044 · 10yr Fixed 5.4%',   badge: { label: 'Current',  variant: 'success' } },
+
+  // Beneficiaries
+  { id: 'ben-001', type: 'beneficiary', title: 'Robert Johnson',        subtitle: 'BEN-001 · Chase ****9910',      badge: { label: 'Verified',   variant: 'success' } },
+  { id: 'ben-002', type: 'beneficiary', title: 'Acme Corp Payroll',     subtitle: 'BEN-002 · Wells Fargo ****4421', badge: { label: 'Verified',   variant: 'success' } },
+  { id: 'ben-003', type: 'beneficiary', title: 'UK HMRC Tax',           subtitle: 'BEN-003 · Sort 20-00-00',        badge: { label: 'Verified',   variant: 'success' } },
+  { id: 'ben-004', type: 'beneficiary', title: 'Landlord — Park Ave',   subtitle: 'BEN-004 · Citibank ****6631',    badge: { label: 'Unverified', variant: 'warn'    } },
+  { id: 'ben-005', type: 'beneficiary', title: 'Sofia Marin',           subtitle: 'BEN-005 · IBAN ES91****2100',    badge: { label: 'Verified',   variant: 'success' } },
+
+  // Standing Orders
+  { id: 'so-001', type: 'standing-order', title: 'Rent — Park Avenue',    subtitle: 'Monthly · 1st · $2,400',       badge: { label: 'Active',    variant: 'success' } },
+  { id: 'so-002', type: 'standing-order', title: 'Gym Membership',         subtitle: 'Monthly · 15th · $49',         badge: { label: 'Active',    variant: 'success' } },
+  { id: 'so-003', type: 'standing-order', title: 'Savings Transfer',       subtitle: 'Weekly · Mon · $250',          badge: { label: 'Active',    variant: 'success' } },
+  { id: 'so-004', type: 'standing-order', title: 'Charity — Red Cross',    subtitle: 'Monthly · 28th · $30',         badge: { label: 'Paused',    variant: 'neutral' } },
+  { id: 'so-005', type: 'standing-order', title: 'Insurance Premium',      subtitle: 'Quarterly · 1st · $310',       badge: { label: 'Active',    variant: 'success' } },
+
+  // Investments
+  { id: 'inv-001', type: 'investment', title: 'S&P 500 Index Fund',      subtitle: 'VFIAX · 124 units',             badge: { label: '+12.4%',   variant: 'success' } },
+  { id: 'inv-002', type: 'investment', title: 'Apple Inc.',               subtitle: 'AAPL · 45 shares',             badge: { label: '+8.2%',    variant: 'success' } },
+  { id: 'inv-003', type: 'investment', title: 'US Treasury Bond 2031',    subtitle: 'CUSIP 912828YK0 · $10,000',    badge: { label: '3.5% APY', variant: 'neutral' } },
+  { id: 'inv-004', type: 'investment', title: 'Emerging Markets ETF',     subtitle: 'VEIEX · 88 units',             badge: { label: '-4.1%',    variant: 'error'   } },
+  { id: 'inv-005', type: 'investment', title: 'Corporate Bond Portfolio', subtitle: 'PF-882 · $25,000 notional',    badge: { label: '5.1% APY', variant: 'neutral' } },
+
+  // FX / Foreign Exchange
+  { id: 'fx-001', type: 'fx', title: 'EUR/USD Forward',        subtitle: 'FX-3310 · €50,000 · 15 Apr 2026',  badge: { label: 'Open',      variant: 'success' } },
+  { id: 'fx-002', type: 'fx', title: 'GBP/JPY Spot',           subtitle: 'FX-3298 · £20,000 · Settled',       badge: { label: 'Settled',   variant: 'neutral' } },
+  { id: 'fx-003', type: 'fx', title: 'USD/CHF Limit Order',    subtitle: 'FX-3401 · $30,000 · Rate 0.8850',   badge: { label: 'Pending',   variant: 'warn'    } },
+  { id: 'fx-004', type: 'fx', title: 'AUD/USD Spot',           subtitle: 'FX-3289 · A$15,000 · Settled',      badge: { label: 'Settled',   variant: 'neutral' } },
+
+  // Payments
+  { id: 'pay-001', type: 'payment', title: 'Invoice #INV-2291',       subtitle: 'Acme Corp · Due 10 Apr 2026',   badge: { label: 'Pending',    variant: 'warn'    } },
+  { id: 'pay-002', type: 'payment', title: 'Invoice #INV-2187',       subtitle: 'TechSupplies Ltd · Paid',       badge: { label: 'Paid',       variant: 'success' } },
+  { id: 'pay-003', type: 'payment', title: 'Payroll Run — Mar 2026',  subtitle: '42 employees · $184,320',       badge: { label: 'Processed',  variant: 'success' } },
+  { id: 'pay-004', type: 'payment', title: 'SWIFT Transfer SWIFT9921',subtitle: 'Deutsche Bank · €12,500',       badge: { label: 'In Transit', variant: 'warn'    } },
+  { id: 'pay-005', type: 'payment', title: 'Tax Payment Q1 2026',     subtitle: 'IRS · $8,420',                  badge: { label: 'Scheduled',  variant: 'neutral' } },
+
+  // Insurance
+  { id: 'ins-001', type: 'insurance', title: 'Home & Contents',        subtitle: 'POL-44821 · Renews Jun 2026',   badge: { label: 'Active',  variant: 'success' } },
+  { id: 'ins-002', type: 'insurance', title: 'Life Cover — Term 20yr', subtitle: 'POL-38812 · $500,000 cover',    badge: { label: 'Active',  variant: 'success' } },
+  { id: 'ins-003', type: 'insurance', title: 'Vehicle Insurance',      subtitle: 'POL-51003 · Renews Jan 2027',   badge: { label: 'Active',  variant: 'success' } },
+  { id: 'ins-004', type: 'insurance', title: 'Travel Insurance — EU',  subtitle: 'POL-60120 · Valid 1–30 Apr',    badge: { label: 'Active',  variant: 'success' } },
+  { id: 'ins-005', type: 'insurance', title: 'Business Liability',     subtitle: 'POL-72910 · Renews Sep 2026',   badge: { label: 'Lapsed',  variant: 'error'   } },
+];
+
+// Maps filter chip id → data type string
+const FILTER_TYPE_MAP = {
+  accounts:        'account',
+  transactions:    'transaction',
+  customers:       'customer',
+  cards:           'card',
+  loans:           'loan',
+  beneficiaries:   'beneficiary',
+  'standing-orders': 'standing-order',
+  investments:     'investment',
+  fx:              'fx',
+  payments:        'payment',
+  insurance:       'insurance',
+};
+
+// Canonical display order for groups in results
+const GROUP_ORDER = [
+  'account', 'customer', 'transaction', 'card', 'loan',
+  'beneficiary', 'standing-order', 'investment', 'fx', 'payment', 'insurance',
+];
+
+function searchMockData(term, filter) {
+  const q = term.toLowerCase();
+  const typeFilter = FILTER_TYPE_MAP[filter]; // undefined when filter === 'all'
+
+  const items = MOCK_DATA.filter(item => {
+    if (typeFilter && item.type !== typeFilter) return false;
+    return item.title.toLowerCase().includes(q) ||
+           (item.subtitle ?? '').toLowerCase().includes(q);
+  });
+
+  // Group by type in canonical order
+  const groups = {};
+  items.forEach(item => {
+    if (!groups[item.type]) groups[item.type] = { groupId: item.type, label: labelFor(item.type), items: [] };
+    groups[item.type].items.push(item);
+  });
+
+  const result = GROUP_ORDER.map(t => groups[t]).filter(Boolean);
+  result.forEach(g => { g.total = g.items.length; });
+  return result;
+}
+
+function labelFor(type) {
+  return {
+    account:        'Accounts',
+    transaction:    'Transactions',
+    customer:       'Customers',
+    card:           'Cards',
+    loan:           'Loans',
+    beneficiary:    'Beneficiaries',
+    'standing-order': 'Standing Orders',
+    investment:     'Investments',
+    fx:             'FX / Foreign Exchange',
+    payment:        'Payments',
+    insurance:      'Insurance',
+  }[type] ?? type;
+}
+
+// ─── Demo wiring ───────────────────────────────────────────────────────────
+
+const el        = document.getElementById('search');
+const logEl     = document.getElementById('event-log');
+let   scenario  = 'normal';
+let   simDelay  = 600;
+let   controller;
+
+// Set initial filters — 12 total, intentionally exceeding typical chip bar width
+// to exercise the More (N) overflow button on standard screens
+el.filters = [
+  { id: 'all',              label: 'All'              },
+  { id: 'accounts',         label: 'Accounts'         },
+  { id: 'transactions',     label: 'Transactions'     },
+  { id: 'customers',        label: 'Customers'        },
+  { id: 'cards',            label: 'Cards'            },
+  { id: 'loans',            label: 'Loans'            },
+  { id: 'beneficiaries',    label: 'Beneficiaries'    },
+  { id: 'standing-orders',  label: 'Standing Orders'  },
+  { id: 'investments',      label: 'Investments'      },
+  { id: 'fx',               label: 'FX'               },
+  { id: 'payments',         label: 'Payments'         },
+  { id: 'insurance',        label: 'Insurance'        },
+];
+
+// ── Event: bs:search ─────────────────────────────────────────────────────
+el.addEventListener('bs:search', async ({ detail }) => {
+  controller?.abort();
+  controller = new AbortController();
+
+  el.setAttribute('loading', '');
+  el.removeAttribute('error');
+  updatePills(detail.filter, '…');
+  log('bs:search', `term="${detail.term}" filter="${detail.filter}"`);
+
+  // Simulate network delay
+  try {
+    await sleep(simDelay, controller.signal);
+  } catch {
+    return; // aborted — newer search fired
+  }
+
+  switch (scenario) {
+    case 'normal': {
+      const data = searchMockData(detail.term, detail.filter);
+      el.results = data;
+      const total = data.reduce((s, g) => s + g.items.length, 0);
+      updatePills(detail.filter, total);
+      break;
+    }
+    case 'empty':
+      el.results = [];
+      updatePills(detail.filter, 0);
+      break;
+    case 'loading-stuck':
+      // Just leave loading state — never resolve
+      return;
+    case 'network-error':
+      el.setAttribute('error', 'network');
+      updatePills(detail.filter, 'Error');
+      break;
+    case 'timeout':
+      el.setAttribute('error', 'timeout');
+      updatePills(detail.filter, 'Error');
+      break;
+    case 'rate-limited':
+      el.setAttribute('error', 'rate-limited');
+      updatePills(detail.filter, 'Error');
+      break;
+    case 'server-error':
+      el.setAttribute('error', 'server');
+      updatePills(detail.filter, 'Error');
+      break;
+  }
+
+  el.removeAttribute('loading');
+});
+
+// ── Event: bs:select ─────────────────────────────────────────────────────
+el.addEventListener('bs:select', ({ detail }) => {
+  log('bs:select', `id="${detail.item.id}" title="${detail.item.title}"`);
+});
+
+// ── Event: bs:filter-change ───────────────────────────────────────────────
+el.addEventListener('bs:filter-change', ({ detail }) => {
+  log('bs:filter-change', `filter="${detail.filter}"`);
+  document.getElementById('filter-pill').textContent = `Filter: ${detail.filter}`;
+});
+
+// ── Event: bs:clear ───────────────────────────────────────────────────────
+el.addEventListener('bs:clear', () => {
+  log('bs:clear', '—');
+  updatePills('all', '—');
+});
+
+// ── Event: bs:retry ───────────────────────────────────────────────────────
+el.addEventListener('bs:retry', ({ detail }) => {
+  log('bs:retry', `term="${detail.term}" filter="${detail.filter}"`);
+  el.removeAttribute('error');
+  el.dispatchEvent(new CustomEvent('bs:search', {
+    detail: { ...detail, requestId: crypto.randomUUID() },
+    bubbles: true, composed: true
+  }));
+});
+
+// ── Event: bs:open / bs:close ─────────────────────────────────────────────
+el.addEventListener('bs:open',  () => log('bs:open',  '—'));
+el.addEventListener('bs:close', () => log('bs:close', '—'));
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    const id = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => { clearTimeout(id); reject(new DOMException('Aborted', 'AbortError')); });
+  });
+}
+
+function log(event, detail) {
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}.${String(now.getMilliseconds()).padStart(3,'0')}`;
+  const empty = logEl.querySelector('.log-empty');
+  if (empty) empty.remove();
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${time}</span><span class="log-event">${event}</span><span class="log-detail">${detail}</span>`;
+  logEl.prepend(line);
+}
+
+function updatePills(filter, results) {
+  document.getElementById('filter-pill').textContent  = `Filter: ${filter}`;
+  document.getElementById('results-pill').textContent = `Results: ${results}`;
+}
+
+function clearLog() {
+  logEl.innerHTML = '<div class="log-empty">— events will appear here as you interact —</div>';
+}
+
+// ─── Scenario control ──────────────────────────────────────────────────────
+
+function setScenario(name) {
+  scenario = name;
+  document.querySelectorAll('[id^="btn-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById(`btn-${name}`)?.classList.add('active');
+  el.removeAttribute('loading');
+  el.removeAttribute('error');
+  el.results = [];
+}
+
+function simulateOffline() {
+  // Toggle offline simulation by dispatching synthetic events
+  const isOffline = el.shadowRoot.querySelector('.offline-banner')?.classList.contains('visible');
+  window.dispatchEvent(new Event(isOffline ? 'online' : 'offline'));
+  log(isOffline ? 'window:online' : 'window:offline', '— simulated');
+  document.getElementById('status-dot').className = 'status-dot ' + (isOffline ? 'online' : 'error');
+  document.getElementById('status-text').textContent = isOffline ? 'Online — Ready' : 'Offline — Search unavailable';
+}
+
+// ─── Theme control ─────────────────────────────────────────────────────────
+
+function setComponentTheme(theme) {
+  el.setAttribute('theme', theme);
+  ['light','dark','auto'].forEach(t => {
+    document.getElementById(`theme-${t}`)?.classList.toggle('active', t === theme);
+  });
+  log('theme-change', `theme="${theme}"`);
+}
+
+function togglePageDark() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-page-theme') === 'dark';
+  html.setAttribute('data-page-theme', isDark ? 'light' : 'dark');
+}
+
+function updateDelay(val) {
+  simDelay = parseInt(val, 10);
+  document.getElementById('delay-label').textContent = `${val}ms`;
+  document.getElementById('delay-slider').setAttribute('aria-valuenow', val);
+}
+
+</script>
+</body>
+</html>
