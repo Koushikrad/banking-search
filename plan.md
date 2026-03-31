@@ -721,21 +721,17 @@ Each phase ends with a **Review Checkpoint** — user reviews the output, we dis
 ### Phase 2 — Core Component Shell
 **Goal:** Component registers, renders a real input in Shadow DOM, `bs:search` fires on debounced typing, `bs:clear` fires on clear.
 
-- [ ] `banking-search.styles.ts` — base CSS (input row, layout, spinner, no themes yet)
-- [ ] `banking-search.ts` — `LitElement` class:
-  - All `@property()` declarations (placeholder, debounceMs, minChars, theme, loading, disabled, highlightMatches, hint, searchLabel)
-  - All `@state()` declarations (open, activeIndex, activeFilter, offline, overflowOpen)
-  - `results` and `filters` JS properties with reference equality guard
-  - `renderItem` property
-  - `render()` method — input row, filter bar slot, listbox shell
-- [ ] `src/utils/debounce.ts` — generic typed debounce
-- [ ] `src/utils/highlight.ts` — XSS-safe `<mark>` injection (stateless regex fix)
-- [ ] Wire `input` event → debounce → emit `bs:search`
-- [ ] Wire clear button → emit `bs:clear`, reset state
-- [ ] Wire `results` setter → re-render listbox (flat and grouped)
-- [ ] **Unit tests:** `debounce.test.ts`, `highlight.test.ts`
+- [x] `banking-search.styles.ts` — base CSS (input row, layout, spinner, no themes yet)
+- [x] `banking-search.ts` — `LitElement` class with all `@property()` / `@state()` declarations, results/filters setters, renderItem property, full render() with all states
+- [x] `src/utils/debounce.ts` — generic typed debounce with `.cancel()`
+- [x] `src/utils/highlight.ts` — XSS-safe `<mark>` injection via DOM Text nodes, regex-safe escaping
+- [x] Wire `input` event → debounce → emit `bs:search`
+- [x] Wire clear button → emit `bs:clear`, reset state
+- [x] Wire `results` setter → re-render listbox (flat and grouped)
+- [x] **Unit tests:** `debounce.test.ts` (7 tests), `highlight.test.ts` (14 tests) — 21/21 passing
 
 **Review Checkpoint 2:** Type in the dev page → see `bs:search` in console. Set `el.results = [...]` → see results render.
+**STATUS: COMPLETE — commit `0bbc1dc`**
 
 ---
 
