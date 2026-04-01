@@ -2,7 +2,7 @@
 
 A production-ready search web component for banking applications. Drop it into any framework — React, Vue, Angular, or plain HTML — with no adapter layer required.
 
-**[Live Demo](https://koushikr.github.io/banking-search/demo/)** &nbsp;·&nbsp; 113 tests passing &nbsp;·&nbsp; Zero runtime dependencies beyond Lit
+**[Live Demo](https://koushikrad.github.io/banking-search/)** &nbsp;·&nbsp; 113 tests passing &nbsp;·&nbsp; Zero runtime dependencies beyond Lit
 
 ---
 
