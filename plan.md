@@ -254,8 +254,7 @@ Every listener, observer, and timer registered in the component **must** be torn
 | `ResizeObserver` on host | `this._resizeObserver = new ResizeObserver(...); this._resizeObserver.observe(this)` | `this._resizeObserver.disconnect()` |
 | `scroll` on `window` | `window.addEventListener('scroll', this._onScroll, { passive: true })` | `window.removeEventListener('scroll', this._onScroll)` |
 | `resize` on `window` | `window.addEventListener('resize', this._onResize, { passive: true })` | `window.removeEventListener('resize', this._onResize)` |
-| `pointerdown` on `document` (click-outside) | `document.addEventListener('pointerdown', this._onOutsideClick)` | `document.removeEventListener('pointerdown', this._onOutsideClick)` |
-| `focusout` on host (keyboard tab-outside) | `this.addEventListener('focusout', this._onFocusOut)` | `this.removeEventListener('focusout', this._onFocusOut)` |
+| `focusout` on host (click-outside + keyboard tab-out) | `this.addEventListener('focusout', this._onFocusOut)` | `this.removeEventListener('focusout', this._onFocusOut)` |
 | Debounce timer | `this._debounceTimer = setTimeout(...)` | `clearTimeout(this._debounceTimer)` |
 | In-flight fetch | `this._abortController = new AbortController()` | `this._abortController.abort()` |
 
@@ -266,7 +265,6 @@ Every listener, observer, and timer registered in the component **must** be torn
 // used for both add and remove — arrow function fields handle `this` binding
 private _onScroll = () => this._updatePosition();
 private _onResize = () => this._updatePosition();
-private _onOutsideClick = (e: PointerEvent) => { ... };
 
 disconnectedCallback() {
   super.disconnectedCallback();
@@ -275,7 +273,6 @@ disconnectedCallback() {
   this._resizeObserver?.disconnect();
   window.removeEventListener('scroll', this._onScroll);
   window.removeEventListener('resize', this._onResize);
-  document.removeEventListener('pointerdown', this._onOutsideClick);
   // scroll listeners on ancestor scroll containers (if any)
   this._scrollParents.forEach(el =>
     el.removeEventListener('scroll', this._onScroll)
@@ -283,25 +280,25 @@ disconnectedCallback() {
 }
 ```
 
-### `focusout` + `composedPath()` for Shadow DOM keyboard tab-out
+### `focusout` + `relatedTarget` for click-outside and keyboard tab-out
 
-`pointerdown` handles mouse/touch click-outside, but a keyboard user tabbing out of the component (into the URL bar, another input, or a different section of the page) leaves the dropdown open. The correct fix is to also listen to `focusout` on the host and use `composedPath()` to check if focus has truly left the component:
+We use a single `focusout` listener on the host instead of a document-level `pointerdown`. This handles both cases:
+
+- **Mouse click outside**: clicking outside moves focus away → `focusout` fires, `relatedTarget` is outside → close
+- **Keyboard Tab away**: `focusout` fires naturally → same logic closes the dropdown
+
+The key is checking `e.relatedTarget` (where focus is **going**) against both the host's light DOM (`this.contains()`) and its Shadow DOM internals (`this.shadowRoot?.contains()`). Result items have `tabindex="-1"`, so clicking them moves focus into the shadow root — `relatedTarget` will be the result item, and `shadowRoot.contains()` returns true → we don't close prematurely before the `click` event fires.
 
 ```typescript
-private _onFocusOut = (e: FocusEvent) => {
-  // e.relatedTarget is the element receiving focus next.
-  // In Shadow DOM, events are retargeted — use composedPath() to see the real target.
-  const newFocus = e.relatedTarget as Node | null;
-  if (newFocus && this.contains(newFocus)) return; // Still inside host
-  // composedPath() gives the full path through shadow roots
-  const path = e.composedPath();
-  if (path.some(el => el === this)) return; // Focus moved within shadow tree
-  this._closeDropdown(); // Focus has genuinely left — close
+private _onFocusOut = (e: FocusEvent): void => {
+  const related = e.relatedTarget as Node | null;
+  // Focus moved to a light DOM child or shadow DOM internal — stay open
+  if (related && (this.contains(related) || this.shadowRoot?.contains(related))) return;
+  this._close();
 };
 ```
 
-> **Why not just `pointerdown`?** Shadow DOM event retargeting means `e.target` on a document-level `pointerdown` listener points to the host element, not the slotted content. For keyboard focus changes, `focusout` + `composedPath()` is the only reliable cross-browser approach that handles both mouse and keyboard users correctly.
-```
+> **Why not `pointerdown` on document?** It requires a document-level listener (more cleanup, wider blast radius), doesn't handle keyboard Tab-out, and Shadow DOM event retargeting makes `e.target` unreliable. `focusout` with `relatedTarget` is the correct, minimal, self-contained solution.
 
 ### Scroll parent detection
 When the component lives inside a scrollable container (not `window`), that container's scroll must also trigger repositioning. On `connectedCallback`, walk the DOM tree upward and collect every ancestor with `overflow: auto | scroll`. Register passive scroll listeners on each. Store them all in `this._scrollParents: Element[]` and remove them all in `disconnectedCallback`.
@@ -738,23 +735,30 @@ Each phase ends with a **Review Checkpoint** — user reviews the output, we dis
 ### Phase 3 — Dropdown Positioning & State Machine
 **Goal:** Dropdown opens in the right place, repositions on scroll/resize, closes on click-outside. All component states (idle/loading/results/empty/error) render correctly.
 
-- [ ] `src/utils/positioning.ts` — `computePosition(anchorRect, dropdownRect, viewport)` — pure function, fully testable
-- [ ] Wire `position: fixed` dropdown to positioning engine
-- [ ] `ResizeObserver` on host → reposition
-- [ ] Passive scroll listeners on `window` + scroll parents
-- [ ] `pointerdown` on document → click-outside close
-- [ ] `disconnectedCallback()` — complete teardown inventory
-- [ ] Full state machine in `render()`:
+- [x] `src/utils/positioning.ts` — `computePosition(anchorRect, dropdownHeight, viewport)` — pure function, fully testable
+- [x] Wire `position: fixed` dropdown to positioning engine via `_updatePosition()` in `updated()`
+- [x] `ResizeObserver` on host → reposition
+- [x] Passive scroll listeners on `window` + scroll parents via `_findScrollParents()`
+- [x] `focusout` on host → close when focus leaves component (handles both mouse click-outside and keyboard Tab-out); uses `relatedTarget` + `shadowRoot.contains()` for correctness
+- [x] `disconnectedCallback()` — complete teardown: debounce, focusout, online/offline, scroll, resize, rAF, ResizeObserver, scroll parents
+- [x] Full state machine in `render()`:
   - `error` state — error panel with Retry button, `role="alert"`, `bs:retry` event
   - `loading` state — skeleton rows, `aria-busy="true"`
-  - `results` state — item rows with `renderItem` or default template
+  - `results` state — item rows with `renderItem` or default template + `highlight()` wired
   - `empty` state — `slot="no-results"` fallback, `aria-live` announce
   - `idle` state — closed dropdown
-- [ ] Offline banner (`online`/`offline` window events)
-- [ ] `bs:open` / `bs:close` events (guarded — only fire on actual state change)
-- [ ] **Unit tests:** `positioning.test.ts` — all 4 viewport flip scenarios
+- [x] Offline banner (`online`/`offline` window events)
+- [x] `bs:open` / `bs:close` events (guarded — only fire on actual state change)
+- [x] Complete `banking-search.styles.ts` — all classes, all tokens as CSS custom properties, dark/auto themes, skeleton shimmer, badge variants, mobile, reduced-motion
+- [x] Switched from `_unsafeSvg()` template hack to Lit's `unsafeSVG()` directive
+- [x] Fixed `aria-expanded` to emit string `'true'`/`'false'` (not boolean)
+- [x] Fixed `_onFocusOut` — now uses `relatedTarget` correctly instead of broken `composedPath()` check
+- [x] Fixed `"dev"` script: `vite demo` → `vite` so `vite.config.ts` is picked up and demo opens at `/demo/`
+- [x] **Unit tests:** `positioning.test.ts` — 13 tests covering all 4 viewport edge scenarios + gap offset
+- [x] **Build:** `dist/banking-search.js` (62KB ESM) + `dist/banking-search.umd.cjs` — clean, zero TS errors
 
-**Review Checkpoint 3:** Dropdown opens below/above input correctly, click outside closes, all states visible in dev page.
+**Review Checkpoint 3:** Dropdown opens below/above input correctly, focusout closes, all states visible in dev page.
+**STATUS: COMPLETE**
 
 ---
 

@@ -3,6 +3,15 @@ import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
 
 export default defineConfig({
+  // Dev server — serves from the project root so /src/ and /demo/ are both accessible.
+  // The demo page is at http://localhost:5173/demo/
+  server: {
+    open: '/demo/',
+    fs: {
+      // Allow serving files from the workspace root (one level up from demo/)
+      allow: ['.'],
+    },
+  },
   plugins: [
     dts({
       include: ['src/**/*.ts'],
