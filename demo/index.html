@@ -347,6 +347,7 @@
         theme="light"
         min-chars="2"
         debounce-ms="300"
+        page-size="5"
         highlight-matches
         search-label="Search banking entities"
         style="width: 100%; max-width: 560px;"
@@ -712,6 +713,16 @@ el.addEventListener('bs:retry', ({ detail }) => {
 
 el.addEventListener('bs:open',  () => log('bs:open',  '—'));
 el.addEventListener('bs:close', () => log('bs:close', '—'));
+
+// bs:load-more — fired when the user scrolls to the bottom and has-more is true.
+// In this demo all data is local, so there are no real additional pages.
+// We simulate a brief loading state then signal "no more" to dismiss the spinner.
+el.addEventListener('bs:load-more', async ({ detail }) => {
+  log('bs:load-more', `page=${detail.page} term="${detail.term}" filter="${detail.filter}"`);
+  // Simulate a short fetch delay, then tell the component there are no more pages.
+  await sleep(800);
+  el.removeAttribute('has-more');
+});
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 

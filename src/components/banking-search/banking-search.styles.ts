@@ -513,6 +513,33 @@ export const styles = css`
     50%       { opacity: 0.35; }
   }
 
+  /* ─── Pagination sentinel & loading-more row ────────────────────────────── */
+
+  /*
+   * Zero-height invisible element at the bottom of the results list.
+   * The IntersectionObserver watches this element; when it scrolls into the
+   * visible area of the dropdown (root: _dropdownEl), _onLoadMore() fires.
+   */
+  .load-sentinel {
+    height: 1px;
+    margin: 0;
+    padding: 0;
+  }
+
+  /*
+   * Shown while a bs:load-more server fetch is in-flight.
+   * Reuses the existing .spinner class — same animation, no extra CSS needed.
+   */
+  .loading-more-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    gap: 8px;
+    color: var(--bs-text-secondary);
+    font-size: 13px;
+  }
+
   /* ─── Error panel ─────────────────────────────────────────────────────────── */
 
   .error-panel {

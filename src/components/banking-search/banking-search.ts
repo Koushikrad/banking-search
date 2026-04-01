@@ -32,6 +32,7 @@ import type {
   BsFilterChangeDetail,
   BsRetryDetail,
   BsErrorDetail,
+  BsLoadMoreDetail,
 } from './banking-search.types.js';
 
 // ---------------------------------------------------------------------------
@@ -92,12 +93,22 @@ export class BankingSearch extends LitElement {
   minChars = 2;
 
   /**
-   * Maximum number of results rendered per group.
-   * Prevents unbounded DOM growth on large result sets.
-   * Attribute: max-results
+   * Number of results to render per page / batch.
+   * Controls both the initial visible count and how many more are loaded
+   * each time the user scrolls to the bottom of the dropdown.
+   * Attribute: page-size
    */
-  @property({ type: Number, attribute: 'max-results' })
-  maxResults = 10;
+  @property({ type: Number, attribute: 'page-size' })
+  pageSize = 10;
+
+  /**
+   * Set by the host to indicate the server has more pages beyond what is
+   * currently in `results`. When true and the user scrolls to the bottom,
+   * the component fires `bs:load-more` so the host can fetch the next page.
+   * Attribute: has-more (boolean)
+   */
+  @property({ type: Boolean, attribute: 'has-more', reflect: true })
+  hasMore = false;
 
   /**
    * Color scheme. 'auto' follows the OS prefers-color-scheme media query.
@@ -173,6 +184,12 @@ export class BankingSearch extends LitElement {
   set results(value: SearchResults) {
     if (value === this._results) return;
     this._results = value;
+    // When the host appends a new page of results, expand the visible window
+    // to show the newly added items and mark the in-flight request as done.
+    if (this._loadingMore) {
+      this._visibleCount += this.pageSize;
+      this._loadingMore = false;
+    }
     this.requestUpdate('results');
   }
   private _results: SearchResults = [];
@@ -208,6 +225,15 @@ export class BankingSearch extends LitElement {
   @state() private _offline = false;
   @state() private _inputValue = '';
 
+  /** How many results are currently rendered. Starts at pageSize, grows on each load. */
+  @state() private _visibleCount = 0;
+
+  /** Current page number sent in bs:load-more (1-based). */
+  @state() private _page = 1;
+
+  /** True while a bs:load-more request is in-flight — prevents duplicate fires. */
+  @state() private _loadingMore = false;
+
   // -------------------------------------------------------------------------
   // Shadow DOM element refs (resolved after first render)
   // -------------------------------------------------------------------------
@@ -229,6 +255,14 @@ export class BankingSearch extends LitElement {
 
   /** ResizeObserver watches the host element for size changes. */
   private _resizeObserver: ResizeObserver | null = null;
+
+  /**
+   * IntersectionObserver watches the sentinel element at the bottom of the
+   * results list. Uses root: _dropdownEl (not the viewport) because the
+   * dropdown is overflow-y: auto — items are clipped by the dropdown container,
+   * not the viewport, so viewport-based intersection would never fire.
+   */
+  private _sentinelObserver: IntersectionObserver | null = null;
 
   /**
    * Scroll parents detected in connectedCallback.
@@ -321,6 +355,9 @@ export class BankingSearch extends LitElement {
     this._resizeObserver?.disconnect();
     this._resizeObserver = null;
 
+    this._sentinelObserver?.disconnect();
+    this._sentinelObserver = null;
+
     this._scrollParents.forEach(el =>
       el.removeEventListener('scroll', this._onScroll),
     );
@@ -346,6 +383,16 @@ export class BankingSearch extends LitElement {
      */
     if (this._open) {
       this._updatePosition();
+      this._setupSentinelObserver();
+    } else {
+      // Disconnect when closed — no point observing a hidden sentinel
+      this._sentinelObserver?.disconnect();
+      this._sentinelObserver = null;
+    }
+
+    // If has-more flips to false while a load was in-flight, clear the flag
+    if (changed.has('hasMore') && !this.hasMore && this._loadingMore) {
+      this._loadingMore = false;
     }
   }
 
@@ -411,6 +458,70 @@ export class BankingSearch extends LitElement {
   }
 
   // -------------------------------------------------------------------------
+  // Pagination / lazy loading
+  // -------------------------------------------------------------------------
+
+  /**
+   * Wires up the IntersectionObserver on the sentinel element.
+   * Called after every render while the dropdown is open so the observer
+   * always points to the current sentinel DOM node.
+   *
+   * root: this._dropdownEl — critical. The dropdown is overflow-y: auto,
+   * so items are clipped by the dropdown container, not the viewport.
+   * Using root: null (viewport) would never fire for items inside a
+   * scrollable container. We observe intersection relative to the dropdown.
+   */
+  private _setupSentinelObserver(): void {
+    this._sentinelObserver?.disconnect();
+    this._sentinelObserver = null;
+
+    const sentinel = this.shadowRoot?.querySelector('.load-sentinel');
+    if (!sentinel || !this._dropdownEl) return;
+
+    this._sentinelObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !this._loadingMore) {
+          this._onLoadMore();
+        }
+      },
+      { root: this._dropdownEl, threshold: 0.1 },
+    );
+
+    this._sentinelObserver.observe(sentinel);
+  }
+
+  /**
+   * Fired when the sentinel scrolls into view.
+   *
+   * Two things happen (independently, not mutually exclusive):
+   *  1. Client-side: if there are more items already in memory beyond
+   *     _visibleCount, expand the window by pageSize.
+   *  2. Server-side: if has-more is true (host signals more pages exist),
+   *     fire bs:load-more so the host can fetch the next page.
+   */
+  private _onLoadMore(): void {
+    const allItems = this._allFlatResults();
+    const hasMoreClientSide = this._visibleCount < allItems.length;
+
+    if (hasMoreClientSide) {
+      this._visibleCount = Math.min(this._visibleCount + this.pageSize, allItems.length);
+    }
+
+    if (this.hasMore && !hasMoreClientSide) {
+      // All in-memory items are shown — need a server fetch
+      this._loadingMore = true;
+      this._page++;
+      const detail: BsLoadMoreDetail = {
+        term:      this._inputValue,
+        filter:    this._activeFilter,
+        page:      this._page,
+        requestId: crypto.randomUUID(),
+      };
+      this._emit('bs:load-more', detail);
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Debounce management
   // -------------------------------------------------------------------------
 
@@ -438,6 +549,10 @@ export class BankingSearch extends LitElement {
   private _fireSearch(term: string): void {
     if (term.length < this.minChars) return;
     this._searchSeq++;
+    // Reset pagination state on every new search
+    this._visibleCount = this.pageSize;
+    this._page = 1;
+    this._loadingMore = false;
     const detail: BsSearchDetail = {
       term,
       filter: this._activeFilter,
@@ -565,7 +680,16 @@ export class BankingSearch extends LitElement {
     if (next < 0) {
       this._activeIndex = items.length - 1;
     } else if (next >= items.length) {
-      this._activeIndex = 0;
+      // Arrow past last visible item — expand window if more items exist in memory
+      const allItems = this._allFlatResults();
+      if (next < allItems.length) {
+        // Reveal one more item so focus can land on it
+        this._visibleCount = Math.min(this._visibleCount + 1, allItems.length);
+        this._activeIndex = next;
+      } else {
+        // No more items in memory — wrap to top
+        this._activeIndex = 0;
+      }
     } else {
       this._activeIndex = next;
     }
@@ -576,15 +700,24 @@ export class BankingSearch extends LitElement {
   // -------------------------------------------------------------------------
 
   /**
-   * Returns a flat array of all SearchResultItem objects regardless of whether
-   * results are flat or grouped. Used for keyboard index tracking.
+   * All items across all groups — no slicing.
+   * Used to calculate how many items exist vs how many are visible.
    */
-  private _flatResults(): SearchResultItem[] {
+  private _allFlatResults(): SearchResultItem[] {
     if (!this._results.length) return [];
     if (isGrouped(this._results)) {
-      return this._results.flatMap(g => g.items.slice(0, this.maxResults));
+      return this._results.flatMap(g => g.items);
     }
-    return (this._results as SearchResultItem[]).slice(0, this.maxResults);
+    return this._results as SearchResultItem[];
+  }
+
+  /**
+   * Items currently visible — sliced to _visibleCount (or pageSize on first render).
+   * Used for keyboard index tracking and aria-activedescendant.
+   */
+  private _flatResults(): SearchResultItem[] {
+    const count = this._visibleCount > 0 ? this._visibleCount : this.pageSize;
+    return this._allFlatResults().slice(0, count);
   }
 
   // -------------------------------------------------------------------------
@@ -757,10 +890,19 @@ export class BankingSearch extends LitElement {
   }
 
   private _renderResults() {
+    const visibleCount = this._visibleCount > 0 ? this._visibleCount : this.pageSize;
+    const allCount     = this._allFlatResults().length;
+    // Show sentinel when more items exist in memory OR server has more pages
+    const hasMoreToShow = visibleCount < allCount || this.hasMore;
+
+    let listContent;
     if (isGrouped(this._results)) {
-      let globalIndex = 0;
-      return html`${this._results.map(group => {
-        const visibleItems = group.items.slice(0, this.maxResults);
+      let remaining    = visibleCount;
+      let globalIndex  = 0;
+      listContent = html`${this._results.map(group => {
+        if (remaining <= 0) return nothing;
+        const visibleItems = group.items.slice(0, remaining);
+        remaining -= visibleItems.length;
         return html`
           <ul role="group" aria-labelledby="group-${group.groupId}" class="result-group">
             <li
@@ -780,13 +922,25 @@ export class BankingSearch extends LitElement {
           </ul>
         `;
       })}`;
+    } else {
+      const flat = (this._results as SearchResultItem[]).slice(0, visibleCount);
+      listContent = html`
+        <ul role="group" class="result-group">
+          ${flat.map((item, idx) => this._renderItem(item, idx))}
+        </ul>
+      `;
     }
 
-    const flat = (this._results as SearchResultItem[]).slice(0, this.maxResults);
     return html`
-      <ul role="group" class="result-group">
-        ${flat.map((item, idx) => this._renderItem(item, idx))}
-      </ul>
+      ${listContent}
+      ${hasMoreToShow ? html`
+        ${this._loadingMore ? html`
+          <div class="loading-more-row" aria-hidden="true">
+            <span class="spinner"></span>
+          </div>
+        ` : nothing}
+        <div class="load-sentinel" aria-hidden="true"></div>
+      ` : nothing}
     `;
   }
 
