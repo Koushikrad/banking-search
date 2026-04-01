@@ -1105,13 +1105,15 @@ export class BankingSearch extends LitElement {
 
   private _renderError() {
     return html`
-      <div class="error-panel" role="alert">
-        <span class="error-icon" aria-hidden="true">${unsafeSVG(icon('warning'))}</span>
-        <p class="error-message">${getErrorMessage(this.error ?? 'unknown')}</p>
-        <button class="btn-retry" type="button" @click=${this._fireRetry}>
-          Try again
-        </button>
-      </div>
+      <slot name="error">
+        <div class="error-panel" role="alert">
+          <span class="error-icon" aria-hidden="true">${unsafeSVG(icon('warning'))}</span>
+          <p class="error-message">${getErrorMessage(this.error ?? 'unknown')}</p>
+          <button class="btn-retry" type="button" @click=${this._fireRetry}>
+            Try again
+          </button>
+        </div>
+      </slot>
     `;
   }
 
