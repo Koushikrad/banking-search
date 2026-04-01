@@ -974,9 +974,8 @@ export class BankingSearch extends LitElement {
   // -------------------------------------------------------------------------
 
   override render() {
-    const hasValue     = this._inputValue.length > 0;
-    const belowMinChars = hasValue && this._inputValue.length < this.minChars;
-    const flatItems    = this._flatResults();
+    const hasValue  = this._inputValue.length > 0;
+    const flatItems = this._flatResults();
 
     return html`
       <div class="search-wrapper">
@@ -1024,6 +1023,11 @@ export class BankingSearch extends LitElement {
             <span class="spinner" aria-hidden="true" role="status"></span>` : nothing}
         </div>
 
+        ${this.hint ? html`
+          <p class="search-hint">
+            ${this.hint.replace('{n}', String(this.minChars))}
+          </p>` : nothing}
+
         ${this._filters.length > 0 ? html`
           <div
             class="filter-bar"
@@ -1063,11 +1067,6 @@ export class BankingSearch extends LitElement {
               </button>
             ` : nothing}
           </div>` : nothing}
-
-        ${belowMinChars ? html`
-          <p class="search-hint" role="status" aria-live="polite">
-            ${this.hint.replace('{n}', String(this.minChars))}
-          </p>` : nothing}
 
         <div
           id="results-listbox"

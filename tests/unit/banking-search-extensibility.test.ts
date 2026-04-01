@@ -95,6 +95,68 @@ describe('banking-search extensibility hooks', () => {
     });
   });
 
+  describe('hint attribute', () => {
+    it('renders .search-hint when hint is set', async () => {
+      el = await fixture<BankingSearch>(
+        html`<banking-search min-chars="2" hint="Type {n}+ characters to search"></banking-search>`
+      );
+      await el.updateComplete;
+
+      const hint = el.shadowRoot!.querySelector('.search-hint') as HTMLElement;
+      expect(hint).to.exist;
+      expect(hint.textContent!.trim()).toBe('Type 2+ characters to search');
+    });
+
+    it('does not render .search-hint when hint is set to empty string', async () => {
+      el = await fixture<BankingSearch>(
+        html`<banking-search min-chars="2" hint=""></banking-search>`
+      );
+      await el.updateComplete;
+
+      const hint = el.shadowRoot!.querySelector('.search-hint');
+      expect(hint).toBeNull();
+    });
+
+    it('renders hint before the user types anything', async () => {
+      el = await fixture<BankingSearch>(
+        html`<banking-search min-chars="3" hint="Search hint"></banking-search>`
+      );
+      await el.updateComplete;
+
+      // No input value — hint must still appear
+      expect((el as any)._inputValue).toBe('');
+      const hint = el.shadowRoot!.querySelector('.search-hint');
+      expect(hint).to.exist;
+    });
+
+    it('hint appears above filter-bar in the DOM', async () => {
+      el = await fixture<BankingSearch>(
+        html`<banking-search hint="Above filters" min-chars="1"></banking-search>`
+      );
+      el.filters = [{ id: 'all', label: 'All' }];
+      await el.updateComplete;
+
+      const wrapper = el.shadowRoot!.querySelector('.search-wrapper')!;
+      const children = Array.from(wrapper.children);
+      const hintIdx   = children.findIndex(c => c.classList.contains('search-hint'));
+      const filterIdx = children.findIndex(c => c.classList.contains('filter-bar'));
+
+      expect(hintIdx).toBeGreaterThan(-1);
+      expect(filterIdx).toBeGreaterThan(-1);
+      expect(hintIdx).toBeLessThan(filterIdx);
+    });
+
+    it('interpolates {n} with the current minChars value', async () => {
+      el = await fixture<BankingSearch>(
+        html`<banking-search min-chars="4" hint="Need {n} chars"></banking-search>`
+      );
+      await el.updateComplete;
+
+      const hint = el.shadowRoot!.querySelector('.search-hint') as HTMLElement;
+      expect(hint.textContent!.trim()).toBe('Need 4 chars');
+    });
+  });
+
   describe('named slots', () => {
     it('slot="no-results" overrides the default empty state panel', async () => {
       el = await fixture<BankingSearch>(html`

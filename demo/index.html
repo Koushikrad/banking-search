@@ -1,19 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Banking Search — Component Demo</title>
   <style>
     /* ── Reset & base ─────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     :root {
       --page-bg: #f0f4f8;
       --page-text: #1a202c;
       --card-bg: #ffffff;
       --card-border: #e2e8f0;
-      --card-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 4px 16px rgba(0, 0, 0, .04);
       --accent: #0066cc;
       --accent-dark: #004fa3;
       --tag-bg: #ebf4ff;
@@ -35,7 +42,7 @@
       --page-text: #e2e8f0;
       --card-bg: #1e293b;
       --card-border: #334155;
-      --card-shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2);
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .2);
       --tag-bg: #1e3a5f;
       --tag-text: #7ec8ff;
       --log-bg: #020617;
@@ -60,30 +67,34 @@
      * the host app's theme — no JS, no MutationObserver, no fragile coupling.
      */
     [data-page-theme="dark"] banking-search[theme="auto"] {
-      --bs-bg:               #1a1d23;
-      --bs-surface:          #22262f;
-      --bs-border:           #3a3f4b;
-      --bs-text:             #f0f4f8;
-      --bs-text-secondary:   #8b95a4;
-      --bs-hover-bg:         #2a2f3a;
-      --bs-active-bg:        #1e3a5f;
-      --bs-highlight-color:  #93c5fd;
-      --bs-shadow:           0 4px 20px rgba(0, 0, 0, 0.4);
+      --bs-bg: #1a1d23;
+      --bs-surface: #22262f;
+      --bs-border: #3a3f4b;
+      --bs-text: #f0f4f8;
+      --bs-text-secondary: #8b95a4;
+      --bs-hover-bg: #2a2f3a;
+      --bs-active-bg: #1e3a5f;
+      --bs-highlight-color: #93c5fd;
+      --bs-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 
-      --bs-success-bg:       #064e3b;
-      --bs-success-text:     #6ee7b7;
-      --bs-warning-bg:       #451a03;
-      --bs-warning-text:     #fcd34d;
-      --bs-error-bg:         #450a0a;
-      --bs-error-text:       #fca5a5;
+      --bs-success-bg: #064e3b;
+      --bs-success-text: #6ee7b7;
+      --bs-warning-bg: #451a03;
+      --bs-warning-text: #fcd34d;
+      --bs-error-bg: #450a0a;
+      --bs-error-text: #fca5a5;
 
-      --bs-offline-bg:       #3b2000;
-      --bs-offline-text:     #fde68a;
-      --bs-offline-border:   #92400e;
-      --bs-offline-icon:     #fcd34d;
+      --bs-offline-bg: #3b2000;
+      --bs-offline-text: #fde68a;
+      --bs-offline-border: #92400e;
+      --bs-offline-icon: #fcd34d;
     }
 
-    html { font-family: var(--font); font-size: 16px; }
+    html {
+      font-family: var(--font);
+      font-size: 16px;
+    }
+
     body {
       background: var(--page-bg);
       color: var(--page-text);
@@ -113,9 +124,18 @@
       letter-spacing: -0.3px;
     }
 
-    .header-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .header-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
 
-    .container { max-width: 960px; margin: 0 auto; padding: 32px 20px 120px; }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 20px 120px;
+    }
 
     /* ── Cards ────────────────────────────────────────────────────── */
     .card {
@@ -152,11 +172,30 @@
       transition: background .15s, border-color .15s, transform .1s;
       font-family: var(--font);
     }
-    .btn:hover { background: var(--page-bg); border-color: var(--accent); }
-    .btn:active { transform: scale(.97); }
-    .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .btn-danger { border-color: var(--error); color: var(--error); }
-    .btn-danger:hover { background: #fee2e2; }
+
+    .btn:hover {
+      background: var(--page-bg);
+      border-color: var(--accent);
+    }
+
+    .btn:active {
+      transform: scale(.97);
+    }
+
+    .btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn-danger {
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .btn-danger:hover {
+      background: #fee2e2;
+    }
 
     /* ── Scenario badge ───────────────────────────────────────────── */
     .scenario-grid {
@@ -193,17 +232,41 @@
 
     .event-log .log-line {
       padding: 3px 0;
-      border-bottom: 1px solid rgba(255,255,255,.04);
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
       line-height: 1.5;
       animation: fadeIn .2s ease;
     }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; } }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-4px);
+      }
 
-    .log-time { color: #475569; margin-right: 10px; }
-    .log-event { color: #7dd3fc; font-weight: 600; margin-right: 8px; }
-    .log-detail { color: #a8daff; }
-    .log-empty { color: #334155; font-style: italic; }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .log-time {
+      color: #475569;
+      margin-right: 10px;
+    }
+
+    .log-event {
+      color: #7dd3fc;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+
+    .log-detail {
+      color: #a8daff;
+    }
+
+    .log-empty {
+      color: #334155;
+      font-style: italic;
+    }
 
     /* ── Info pills ───────────────────────────────────────────────── */
     .info-bar {
@@ -212,6 +275,7 @@
       flex-wrap: wrap;
       margin-bottom: 16px;
     }
+
     .pill {
       background: var(--tag-bg);
       color: var(--tag-text);
@@ -256,8 +320,14 @@
       background: var(--neutral);
       margin-right: 4px;
     }
-    .status-dot.online { background: var(--success); }
-    .status-dot.error  { background: var(--error); }
+
+    .status-dot.online {
+      background: var(--success);
+    }
+
+    .status-dot.error {
+      background: var(--error);
+    }
 
     /* ── Keyboard shortcut grid ───────────────────────────────────── */
     .shortcut-row {
@@ -268,9 +338,20 @@
       border-bottom: 1px solid var(--card-border);
       font-size: 14px;
     }
-    .shortcut-row:last-child { border-bottom: none; }
-    .shortcut-keys { display: flex; gap: 4px; min-width: 140px; }
-    .shortcut-desc { color: var(--neutral); }
+
+    .shortcut-row:last-child {
+      border-bottom: none;
+    }
+
+    .shortcut-keys {
+      display: flex;
+      gap: 4px;
+      min-width: 140px;
+    }
+
+    .shortcut-desc {
+      color: var(--neutral);
+    }
 
     /* ── Delay slider ─────────────────────────────────────────────── */
     .slider-row {
@@ -279,580 +360,1111 @@
       gap: 12px;
       font-size: 13px;
     }
-    input[type=range] { flex: 1; accent-color: var(--accent); }
+
+    input[type=range] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+
+    /* ── Property Playground ─────────────────────────────────────── */
+    .playground-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 32px;
+    }
+
+    @media (max-width: 640px) {
+      .playground-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pg-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .pg-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--page-text);
+    }
+
+    .pg-value {
+      font-weight: 400;
+      color: var(--neutral);
+      font-family: "SF Mono", monospace;
+    }
+
+    .pg-attr {
+      font-size: 11px;
+      color: var(--neutral);
+      font-family: "SF Mono", monospace;
+    }
+
+    .pg-text-input {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      background: var(--page-bg);
+      color: var(--page-text);
+      font-size: 13px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .pg-text-input:focus {
+      border-color: var(--accent);
+    }
+
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 4px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--card-border);
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .toggle-switch input:checked~.toggle-track {
+      background: var(--accent);
+    }
+
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      top: 3px;
+      left: 3px;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+    }
+
+    .toggle-switch input:checked~.toggle-track::after {
+      transform: translateX(18px);
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      color: var(--neutral);
+    }
+
+    /* ── Code tabs ────────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 0;
+    }
+
+    .tab-btn {
+      padding: 7px 16px;
+      border: none;
+      background: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--neutral);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
+      font-family: var(--font);
+      letter-spacing: .2px;
+    }
+
+    .tab-btn:hover {
+      color: var(--accent);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
 
     /* ── Mobile tweak ─────────────────────────────────────────────── */
     @media (max-width: 600px) {
-      .page-header { padding: 12px 16px; }
-      .container { padding: 16px 12px 100px; }
-      .card { padding: 16px; }
-      .component-stage { padding: 24px 12px; }
+      .page-header {
+        padding: 12px 16px;
+      }
+
+      .container {
+        padding: 16px 12px 100px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .component-stage {
+        padding: 24px 12px;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<!-- ─── Page Header ─────────────────────────────────────────────────────── -->
-<header class="page-header" role="banner">
-  <h1>Banking Search — Web Component Demo</h1>
-  <div class="header-controls">
-    <!-- Component theme -->
-    <div role="group" aria-label="Component theme">
-      <button class="btn active" id="theme-light" onclick="setComponentTheme('light')">Light</button>
-      <button class="btn" id="theme-dark" onclick="setComponentTheme('dark')">Dark</button>
-      <button class="btn" id="theme-auto" onclick="setComponentTheme('auto')">Auto</button>
+  <!-- ─── Page Header ─────────────────────────────────────────────────────── -->
+  <header class="page-header" role="banner">
+    <h1>Banking Search — Web Component Demo</h1>
+    <div class="header-controls">
+      <!-- Component theme -->
+      <div role="group" aria-label="Component theme">
+        <button class="btn active" id="theme-light" onclick="setComponentTheme('light')">Light</button>
+        <button class="btn" id="theme-dark" onclick="setComponentTheme('dark')">Dark</button>
+        <button class="btn" id="theme-auto" onclick="setComponentTheme('auto')">Auto</button>
+      </div>
+      <!-- Page dark mode — SVG icon, no emoji -->
+      <button class="btn" id="page-dark-toggle" onclick="togglePageDark()" aria-label="Toggle page dark mode">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          aria-hidden="true">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+        Page Dark
+      </button>
     </div>
-    <!-- Page dark mode — SVG icon, no emoji -->
-    <button class="btn" id="page-dark-toggle" onclick="togglePageDark()" aria-label="Toggle page dark mode">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <circle cx="12" cy="12" r="5"/>
-        <line x1="12" y1="1" x2="12" y2="3"/>
-        <line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/>
-        <line x1="21" y1="12" x2="23" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-      </svg>
-      Page Dark
-    </button>
-  </div>
-</header>
+  </header>
 
-<!-- ─── Main ────────────────────────────────────────────────────────────── -->
-<main class="container" id="main">
+  <!-- ─── Main ────────────────────────────────────────────────────────────── -->
+  <main class="container" id="main">
 
-  <!-- ── Live component ───────────────────────────────────────────────── -->
-  <section class="card" aria-labelledby="demo-heading">
-    <p class="card-title" id="demo-heading">Live Component</p>
+    <!-- ── Live component ───────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="demo-heading">
+      <p class="card-title" id="demo-heading">Live Component</p>
 
-    <div class="info-bar" aria-live="polite" aria-label="Component status">
-      <span class="pill" id="status-pill">
-        <span class="status-dot online" id="status-dot"></span>
-        <span id="status-text">Online — Ready</span>
-      </span>
-      <span class="pill" id="filter-pill">Filter: all</span>
-      <span class="pill" id="results-pill">Results: —</span>
-    </div>
+      <div class="info-bar" aria-live="polite" aria-label="Component status">
+        <span class="pill" id="status-pill">
+          <span class="status-dot online" id="status-dot"></span>
+          <span id="status-text">Online — Ready</span>
+        </span>
+        <span class="pill" id="filter-pill">Filter: all</span>
+        <span class="pill" id="results-pill">Results: —</span>
+      </div>
 
-    <div class="component-stage" role="region" aria-label="Component preview">
-      <!--
+      <div class="component-stage" role="region" aria-label="Component preview">
+        <!--
         The actual <banking-search> custom element.
         Registered by the Lit component via <script type="module"> below.
       -->
-      <banking-search
-        id="search"
-        placeholder="Search accounts, customers, transactions…"
-        theme="light"
-        min-chars="1"
-        debounce-ms="300"
-        page-size="5"
-        highlight-matches
-        search-label="Search banking entities"
-        style="width: 100%; max-width: 560px;"
-      ></banking-search>
-    </div>
-  </section>
-
-  <!-- ── Scenarios ─────────────────────────────────────────────────────── -->
-  <section class="card" aria-labelledby="scenarios-heading">
-    <p class="card-title" id="scenarios-heading">Simulate Scenarios</p>
-    <p style="font-size:13px; color:var(--neutral); margin-bottom:16px;">
-      Click a scenario, then type in the search box to trigger it.
-    </p>
-
-    <div class="scenario-grid" role="group" aria-label="Test scenarios">
-      <button class="btn active" id="btn-normal" onclick="setScenario('normal')">Normal Results</button>
-      <button class="btn" id="btn-paginated" onclick="setScenario('paginated')">Paginated (has-more)</button>
-      <button class="btn" id="btn-empty" onclick="setScenario('empty')">Empty Results</button>
-      <button class="btn" id="btn-loading-stuck" onclick="setScenario('loading-stuck')">Loading (stuck)</button>
-      <button class="btn btn-danger" id="btn-network" onclick="setScenario('network-error')">Network Error</button>
-      <button class="btn btn-danger" id="btn-timeout" onclick="setScenario('timeout')">Timeout Error</button>
-      <button class="btn btn-danger" id="btn-rate-limit" onclick="setScenario('rate-limited')">Rate Limited (429)</button>
-      <button class="btn btn-danger" id="btn-server" onclick="setScenario('server-error')">Server Error (500)</button>
-      <button class="btn" id="btn-offline" onclick="simulateOffline()">Simulate Offline</button>
-    </div>
-
-    <div class="slider-row">
-      <label for="delay-slider" style="white-space:nowrap; font-size:13px;">Simulated delay</label>
-      <input type="range" id="delay-slider" min="0" max="2000" step="100" value="600"
-             aria-valuemin="0" aria-valuemax="2000" aria-valuenow="600"
-             oninput="updateDelay(this.value)" />
-      <span id="delay-label" style="min-width:50px; font-size:13px; font-weight:600;">600ms</span>
-    </div>
-  </section>
-
-  <!-- ── Keyboard Reference ─────────────────────────────────────────────── -->
-  <section class="card" aria-labelledby="keyboard-heading">
-    <p class="card-title" id="keyboard-heading">Keyboard Navigation</p>
-    <div role="table" aria-label="Keyboard shortcuts">
-      <div class="shortcut-row">
-        <div class="shortcut-keys"><kbd>↓</kbd> <kbd>↑</kbd></div>
-        <div class="shortcut-desc">Navigate results / move into listbox from input</div>
+        <banking-search id="search" placeholder="Search accounts, customers, transactions…" theme="light" min-chars="1"
+          debounce-ms="300" page-size="5" highlight-matches search-label="Search banking entities"
+          style="width: 100%; max-width: 560px;"></banking-search>
       </div>
-      <div class="shortcut-row">
-        <div class="shortcut-keys"><kbd>Enter</kbd></div>
-        <div class="shortcut-desc">Select highlighted result</div>
-      </div>
-      <div class="shortcut-row">
-        <div class="shortcut-keys"><kbd>Esc</kbd></div>
-        <div class="shortcut-desc">Close dropdown, return focus to input</div>
-      </div>
-      <div class="shortcut-row">
-        <div class="shortcut-keys"><kbd>Home</kbd> <kbd>End</kbd></div>
-        <div class="shortcut-desc">Jump to first / last result</div>
-      </div>
-      <div class="shortcut-row">
-        <div class="shortcut-keys"><kbd>Tab</kbd></div>
-        <div class="shortcut-desc">Close dropdown, continue tab order</div>
-      </div>
-      <div class="shortcut-row">
-        <div class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></div>
-        <div class="shortcut-desc">Navigate filter chips</div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ── Event Log ──────────────────────────────────────────────────────── -->
-  <section class="card" aria-labelledby="log-heading">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <p class="card-title" id="log-heading" style="margin:0;">Event Log</p>
-      <button class="btn" onclick="clearLog()" aria-label="Clear event log">Clear</button>
-    </div>
-    <div class="event-log" id="event-log" role="log" aria-label="Component events" aria-live="polite">
-      <div class="log-empty">— events will appear here as you interact —</div>
-    </div>
-  </section>
+    <!-- ── Scenarios ─────────────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="scenarios-heading">
+      <p class="card-title" id="scenarios-heading">Simulate Scenarios</p>
+      <p style="font-size:13px; color:var(--neutral); margin-bottom:16px;">
+        Click a scenario, then type in the search box to trigger it.
+      </p>
 
-  <!-- ── Usage Code ─────────────────────────────────────────────────────── -->
-  <section class="card" aria-labelledby="usage-heading">
-    <p class="card-title" id="usage-heading">Usage (Host Integration Pattern)</p>
-    <pre class="code-block" tabindex="0" aria-label="Usage code example"><code><span style="color:#7dd3fc">const</span> el = document.querySelector(<span style="color:#86efac">'banking-search'</span>);
+      <div class="scenario-grid" role="group" aria-label="Test scenarios">
+        <button class="btn active" id="btn-normal" onclick="setScenario('normal')">Normal Results</button>
+        <button class="btn" id="btn-paginated" onclick="setScenario('paginated')">Paginated (has-more)</button>
+        <button class="btn" id="btn-empty" onclick="setScenario('empty')">Empty Results</button>
+        <button class="btn" id="btn-loading-stuck" onclick="setScenario('loading-stuck')">Loading (stuck)</button>
+        <button class="btn btn-danger" id="btn-network-error" onclick="setScenario('network-error')">Network
+          Error</button>
+        <button class="btn btn-danger" id="btn-timeout" onclick="setScenario('timeout')">Timeout Error</button>
+        <button class="btn btn-danger" id="btn-rate-limited" onclick="setScenario('rate-limited')">Rate Limited
+          (429)</button>
+        <button class="btn btn-danger" id="btn-server-error" onclick="setScenario('server-error')">Server Error
+          (500)</button>
+        <button class="btn" id="btn-offline" onclick="simulateOffline()">Simulate Offline</button>
+      </div>
+
+      <div class="slider-row">
+        <label for="delay-slider" style="white-space:nowrap; font-size:13px;">Simulated delay</label>
+        <input type="range" id="delay-slider" min="0" max="2000" step="100" value="600" aria-valuemin="0"
+          aria-valuemax="2000" aria-valuenow="600" oninput="updateDelay(this.value)" />
+        <span id="delay-label" style="min-width:50px; font-size:13px; font-weight:600;">600ms</span>
+      </div>
+    </section>
+
+    <!-- ── Property Playground ──────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="playground-heading">
+      <p class="card-title" id="playground-heading">Property Playground</p>
+      <p style="font-size:13px; color:var(--neutral); margin-bottom:20px;">
+        Tweak any attribute in real time — the component above updates immediately.
+      </p>
+
+      <div class="playground-grid">
+
+        <!-- placeholder -->
+        <div class="pg-row">
+          <div class="pg-label-row">
+            <span>Placeholder</span>
+            <span class="pg-attr">placeholder</span>
+          </div>
+          <input type="text" class="pg-text-input" id="pg-placeholder" oninput="applyProp('placeholder', this.value)" />
+        </div>
+
+        <!-- no-results-text -->
+        <div class="pg-row">
+          <div class="pg-label-row">
+            <span>No-results text</span>
+            <span class="pg-attr">no-results-text</span>
+          </div>
+          <input type="text" class="pg-text-input" id="pg-no-results-text"
+            oninput="applyProp('no-results-text', this.value)" />
+        </div>
+
+        <!-- hint -->
+        <div class="pg-row">
+          <div class="pg-label-row">
+            <span>Hint text</span>
+            <span class="pg-attr">hint</span>
+          </div>
+          <input type="text" class="pg-text-input" id="pg-hint" oninput="applyProp('hint', this.value)" />
+        </div>
+
+        <!-- min-chars -->
+        <div class="pg-row">
+          <div class="pg-label-row">
+            <span>Min chars</span>
+            <span class="pg-attr">min-chars &nbsp;<span class="pg-value" id="pg-min-chars-val"></span></span>
+          </div>
+          <input type="range" id="pg-min-chars" min="0" max="5" step="1"
+            oninput="applyPropNum('min-chars', 'pg-min-chars-val', this.value)" />
+        </div>
+
+        <!-- debounce-ms -->
+        <div class="pg-row">
+          <div class="pg-label-row">
+            <span>Debounce</span>
+            <span class="pg-attr">debounce-ms &nbsp;<span class="pg-value" id="pg-debounce-ms-val"></span></span>
+          </div>
+          <input type="range" id="pg-debounce-ms" min="0" max="1500" step="50"
+            oninput="applyPropNum('debounce-ms', 'pg-debounce-ms-val', this.value, 'ms')" />
+        </div>
+
+        <!-- page-size -->
+        <div class="pg-row">
+          <div class="pg-label-row">
+            <span>Page size</span>
+            <span class="pg-attr">page-size &nbsp;<span class="pg-value" id="pg-page-size-val"></span></span>
+          </div>
+          <input type="range" id="pg-page-size" min="1" max="20" step="1"
+            oninput="applyPropNum('page-size', 'pg-page-size-val', this.value)" />
+        </div>
+
+        <!-- highlight-matches toggle -->
+        <div class="pg-row">
+          <div class="pg-label-row">
+            <span>Highlight matches</span>
+            <span class="pg-attr">highlight-matches</span>
+          </div>
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="pg-highlight-matches"
+                onchange="applyPropBool('highlight-matches', this.checked)" />
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label" id="pg-highlight-matches-label">on</span>
+          </div>
+        </div>
+
+        <!-- disabled toggle -->
+        <div class="pg-row">
+          <div class="pg-label-row">
+            <span>Disabled</span>
+            <span class="pg-attr">disabled</span>
+          </div>
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="pg-disabled" onchange="applyPropBool('disabled', this.checked)" />
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label" id="pg-disabled-label">off</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── Keyboard Reference ─────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="keyboard-heading">
+      <p class="card-title" id="keyboard-heading">Keyboard Navigation</p>
+      <div role="table" aria-label="Keyboard shortcuts">
+        <div class="shortcut-row">
+          <div class="shortcut-keys"><kbd>↓</kbd> <kbd>↑</kbd></div>
+          <div class="shortcut-desc">Navigate results / move into listbox from input</div>
+        </div>
+        <div class="shortcut-row">
+          <div class="shortcut-keys"><kbd>Enter</kbd></div>
+          <div class="shortcut-desc">Select highlighted result</div>
+        </div>
+        <div class="shortcut-row">
+          <div class="shortcut-keys"><kbd>Esc</kbd></div>
+          <div class="shortcut-desc">Close dropdown, return focus to input</div>
+        </div>
+        <div class="shortcut-row">
+          <div class="shortcut-keys"><kbd>Home</kbd> <kbd>End</kbd></div>
+          <div class="shortcut-desc">Jump to first / last result</div>
+        </div>
+        <div class="shortcut-row">
+          <div class="shortcut-keys"><kbd>Tab</kbd></div>
+          <div class="shortcut-desc">Close dropdown, continue tab order</div>
+        </div>
+        <div class="shortcut-row">
+          <div class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></div>
+          <div class="shortcut-desc">Navigate filter chips</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Event Log ──────────────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="log-heading">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <p class="card-title" id="log-heading" style="margin:0;">Event Log</p>
+        <button class="btn" onclick="clearLog()" aria-label="Clear event log">Clear</button>
+      </div>
+      <div class="event-log" id="event-log" role="log" aria-label="Component events" aria-live="polite">
+        <div class="log-empty">— events will appear here as you interact —</div>
+      </div>
+    </section>
+
+    <!-- ── Usage Code ─────────────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="usage-heading">
+      <p class="card-title" id="usage-heading">Usage (Host Integration Pattern)</p>
+
+      <div class="tab-bar" role="tablist" aria-label="Framework examples">
+        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-html"
+          onclick="switchTab('html',    this)">HTML</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-react"
+          onclick="switchTab('react',   this)">React</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-vue"
+          onclick="switchTab('vue',     this)">Vue</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-angular"
+          onclick="switchTab('angular', this)">Angular</button>
+      </div>
+
+      <!-- HTML tab -->
+      <div id="tab-html" class="tab-panel active" role="tabpanel">
+        <pre class="code-block" tabindex="0"><code><span style="color:#475569">&lt;!-- 1. Load from npm build or CDN --&gt;</span>
+<span style="color:#7dd3fc">&lt;script</span> <span style="color:#86efac">type</span>=<span style="color:#86efac">"module"</span> <span style="color:#86efac">src</span>=<span style="color:#86efac">"./banking-search.js"</span><span style="color:#7dd3fc">&gt;&lt;/script&gt;</span>
+
+<span style="color:#475569">&lt;!-- 2. Declare in your HTML --&gt;</span>
+<span style="color:#7dd3fc">&lt;banking-search</span>
+  <span style="color:#86efac">id</span>=<span style="color:#86efac">"search"</span>
+  <span style="color:#86efac">placeholder</span>=<span style="color:#86efac">"Search accounts, customers…"</span>
+  <span style="color:#86efac">min-chars</span>=<span style="color:#86efac">"2"</span>
+  <span style="color:#86efac">debounce-ms</span>=<span style="color:#86efac">"300"</span>
+  <span style="color:#86efac">highlight-matches</span>
+<span style="color:#7dd3fc">&gt;&lt;/banking-search&gt;</span>
+
+<span style="color:#475569">&lt;!-- 3. Wire it up --&gt;</span>
+<span style="color:#7dd3fc">&lt;script</span> <span style="color:#86efac">type</span>=<span style="color:#86efac">"module"</span><span style="color:#7dd3fc">&gt;</span>
+<span style="color:#7dd3fc">const</span> el = document.getElementById(<span style="color:#86efac">'search'</span>);
 <span style="color:#7dd3fc">let</span> controller;
 
 el.filters = [
-  { id: <span style="color:#86efac">'all'</span>, label: <span style="color:#86efac">'All'</span> },
-  { id: <span style="color:#86efac">'accounts'</span>,     label: <span style="color:#86efac">'Accounts'</span> },
+  { id: <span style="color:#86efac">'all'</span>,          label: <span style="color:#86efac">'All'</span>          },
+  { id: <span style="color:#86efac">'accounts'</span>,     label: <span style="color:#86efac">'Accounts'</span>     },
   { id: <span style="color:#86efac">'transactions'</span>, label: <span style="color:#86efac">'Transactions'</span> },
-  { id: <span style="color:#86efac">'customers'</span>,    label: <span style="color:#86efac">'Customers'</span> },
+  { id: <span style="color:#86efac">'customers'</span>,    label: <span style="color:#86efac">'Customers'</span>    },
 ];
 
-el.addEventListener(<span style="color:#86efac">'bs:search'</span>, async ({ detail }) => {
+el.addEventListener(<span style="color:#86efac">'bs:search'</span>, <span style="color:#7dd3fc">async</span> ({ detail }) =&gt; {
   controller?.abort();
   controller = <span style="color:#7dd3fc">new</span> AbortController();
   el.setAttribute(<span style="color:#86efac">'loading'</span>, <span style="color:#86efac">''</span>);
   el.removeAttribute(<span style="color:#86efac">'error'</span>);
   <span style="color:#7dd3fc">try</span> {
-    <span style="color:#7dd3fc">const</span> data = <span style="color:#7dd3fc">await</span> fetchResults(detail.term, detail.filter, controller.signal);
+    <span style="color:#7dd3fc">const</span> data = <span style="color:#7dd3fc">await</span> fetchResults(detail.term, detail.filters, controller.signal);
     el.results = data;
   } <span style="color:#7dd3fc">catch</span> (err) {
-    <span style="color:#7dd3fc">if</span> (err.name === <span style="color:#86efac">'AbortError'</span>) <span style="color:#7dd3fc">return</span>;
-    el.setAttribute(<span style="color:#86efac">'error'</span>, classifyError(err)); <span style="color:#475569">// 'network' | 'timeout' | ...</span>
+    <span style="color:#7dd3fc">if</span> (err.name !== <span style="color:#86efac">'AbortError'</span>) el.setAttribute(<span style="color:#86efac">'error'</span>, <span style="color:#86efac">'network'</span>);
   } <span style="color:#7dd3fc">finally</span> {
     el.removeAttribute(<span style="color:#86efac">'loading'</span>);
   }
 });
 
-el.addEventListener(<span style="color:#86efac">'bs:select'</span>, ({ detail }) => router.navigate(detail.item.url));
-el.addEventListener(<span style="color:#86efac">'bs:retry'</span>,  ({ detail }) => el.dispatchEvent(<span style="color:#7dd3fc">new</span> CustomEvent(<span style="color:#86efac">'bs:search'</span>, { detail })));
+el.addEventListener(<span style="color:#86efac">'bs:select'</span>, ({ detail }) =&gt; router.navigate(detail.item.url));
+el.addEventListener(<span style="color:#86efac">'bs:retry'</span>,  ({ detail }) =&gt; el.dispatchEvent(
+  <span style="color:#7dd3fc">new</span> CustomEvent(<span style="color:#86efac">'bs:search'</span>, { detail, bubbles: <span style="color:#7dd3fc">true</span>, composed: <span style="color:#7dd3fc">true</span> })
+));
+<span style="color:#7dd3fc">&lt;/script&gt;</span>
 </code></pre>
-  </section>
+      </div>
 
-</main>
+      <!-- React tab -->
+      <div id="tab-react" class="tab-panel" role="tabpanel">
+        <pre class="code-block" tabindex="0"><code><span style="color:#7dd3fc">import</span> <span style="color:#86efac">'banking-search'</span>;
+<span style="color:#7dd3fc">import</span> { useEffect, useRef } <span style="color:#7dd3fc">from</span> <span style="color:#86efac">'react'</span>;
 
-<!--
+<span style="color:#7dd3fc">export function</span> SearchBar({ onSelect }) {
+  <span style="color:#7dd3fc">const</span> ref = useRef(<span style="color:#7dd3fc">null</span>);
+
+  useEffect(() =&gt; {
+    <span style="color:#7dd3fc">const</span> el = ref.current;
+    <span style="color:#7dd3fc">let</span> controller;
+
+    el.filters = [
+      { id: <span style="color:#86efac">'all'</span>,          label: <span style="color:#86efac">'All'</span>          },
+      { id: <span style="color:#86efac">'accounts'</span>,     label: <span style="color:#86efac">'Accounts'</span>     },
+      { id: <span style="color:#86efac">'transactions'</span>, label: <span style="color:#86efac">'Transactions'</span> },
+    ];
+
+    <span style="color:#7dd3fc">const</span> onSearch = <span style="color:#7dd3fc">async</span> ({ detail }) =&gt; {
+      controller?.abort();
+      controller = <span style="color:#7dd3fc">new</span> AbortController();
+      el.setAttribute(<span style="color:#86efac">'loading'</span>, <span style="color:#86efac">''</span>);
+      <span style="color:#7dd3fc">try</span> {
+        el.results = <span style="color:#7dd3fc">await</span> fetchResults(detail.term, detail.filters, controller.signal);
+      } <span style="color:#7dd3fc">catch</span> (err) {
+        <span style="color:#7dd3fc">if</span> (err.name !== <span style="color:#86efac">'AbortError'</span>) el.setAttribute(<span style="color:#86efac">'error'</span>, <span style="color:#86efac">'network'</span>);
+      } <span style="color:#7dd3fc">finally</span> {
+        el.removeAttribute(<span style="color:#86efac">'loading'</span>);
+      }
+    };
+
+    el.addEventListener(<span style="color:#86efac">'bs:search'</span>, onSearch);
+    el.addEventListener(<span style="color:#86efac">'bs:select'</span>, onSelect);
+    <span style="color:#7dd3fc">return</span> () =&gt; {
+      el.removeEventListener(<span style="color:#86efac">'bs:search'</span>, onSearch);
+      el.removeEventListener(<span style="color:#86efac">'bs:select'</span>, onSelect);
+    };
+  }, [onSelect]);
+
+  <span style="color:#475569">// JSX — attribute names stay kebab-case for custom elements</span>
+  <span style="color:#7dd3fc">return</span> (
+    &lt;banking-search
+      ref={ref}
+      placeholder=<span style="color:#86efac">"Search accounts, customers…"</span>
+      min-chars=<span style="color:#86efac">"2"</span>
+      highlight-matches
+    /&gt;
+  );
+}
+</code></pre>
+      </div>
+
+      <!-- Vue tab -->
+      <div id="tab-vue" class="tab-panel" role="tabpanel">
+        <pre class="code-block" tabindex="0"><code><span style="color:#475569">&lt;!-- SearchBar.vue --&gt;</span>
+<span style="color:#7dd3fc">&lt;template&gt;</span>
+  <span style="color:#7dd3fc">&lt;banking-search</span>
+    <span style="color:#86efac">ref</span>=<span style="color:#86efac">"searchEl"</span>
+    <span style="color:#86efac">placeholder</span>=<span style="color:#86efac">"Search accounts, customers…"</span>
+    <span style="color:#86efac">min-chars</span>=<span style="color:#86efac">"2"</span>
+    <span style="color:#86efac">highlight-matches</span>
+    <span style="color:#86efac">@bs:search</span>=<span style="color:#86efac">"onSearch"</span>
+    <span style="color:#86efac">@bs:select</span>=<span style="color:#86efac">"onSelect"</span>
+  <span style="color:#7dd3fc">/&gt;</span>
+<span style="color:#7dd3fc">&lt;/template&gt;</span>
+
+<span style="color:#7dd3fc">&lt;script setup&gt;</span>
+<span style="color:#7dd3fc">import</span> <span style="color:#86efac">'banking-search'</span>;
+<span style="color:#7dd3fc">import</span> { ref, onMounted } <span style="color:#7dd3fc">from</span> <span style="color:#86efac">'vue'</span>;
+
+<span style="color:#7dd3fc">const</span> searchEl = ref(<span style="color:#7dd3fc">null</span>);
+<span style="color:#7dd3fc">let</span> controller;
+
+onMounted(() =&gt; {
+  searchEl.value.filters = [
+    { id: <span style="color:#86efac">'all'</span>,          label: <span style="color:#86efac">'All'</span>          },
+    { id: <span style="color:#86efac">'accounts'</span>,     label: <span style="color:#86efac">'Accounts'</span>     },
+    { id: <span style="color:#86efac">'transactions'</span>, label: <span style="color:#86efac">'Transactions'</span> },
+  ];
+});
+
+<span style="color:#7dd3fc">async function</span> onSearch({ detail }) {
+  controller?.abort();
+  controller = <span style="color:#7dd3fc">new</span> AbortController();
+  <span style="color:#7dd3fc">const</span> el = searchEl.value;
+  el.setAttribute(<span style="color:#86efac">'loading'</span>, <span style="color:#86efac">''</span>);
+  <span style="color:#7dd3fc">try</span> {
+    el.results = <span style="color:#7dd3fc">await</span> fetchResults(detail.term, detail.filters, controller.signal);
+  } <span style="color:#7dd3fc">catch</span> (err) {
+    <span style="color:#7dd3fc">if</span> (err.name !== <span style="color:#86efac">'AbortError'</span>) el.setAttribute(<span style="color:#86efac">'error'</span>, <span style="color:#86efac">'network'</span>);
+  } <span style="color:#7dd3fc">finally</span> {
+    el.removeAttribute(<span style="color:#86efac">'loading'</span>);
+  }
+}
+
+<span style="color:#7dd3fc">function</span> onSelect({ detail }) {
+  router.push(detail.item.url);
+}
+<span style="color:#7dd3fc">&lt;/script&gt;</span>
+</code></pre>
+      </div>
+
+      <!-- Angular tab -->
+      <div id="tab-angular" class="tab-panel" role="tabpanel">
+        <pre class="code-block" tabindex="0"><code><span style="color:#475569">// app.module.ts — allow unknown custom elements</span>
+<span style="color:#7dd3fc">import</span> { NgModule, CUSTOM_ELEMENTS_SCHEMA } <span style="color:#7dd3fc">from</span> <span style="color:#86efac">'@angular/core'</span>;
+@NgModule({ schemas: [CUSTOM_ELEMENTS_SCHEMA] })
+<span style="color:#7dd3fc">export class</span> AppModule {}
+
+<span style="color:#475569">// search-bar.component.ts</span>
+<span style="color:#7dd3fc">import</span> <span style="color:#86efac">'banking-search'</span>;
+<span style="color:#7dd3fc">import</span> { Component, ViewChild, ElementRef, OnInit } <span style="color:#7dd3fc">from</span> <span style="color:#86efac">'@angular/core'</span>;
+
+@Component({
+  selector: <span style="color:#86efac">'app-search-bar'</span>,
+  template: <span style="color:#86efac">`
+    &lt;banking-search
+      #searchEl
+      placeholder="Search accounts, customers…"
+      min-chars="2"
+      highlight-matches
+      (bs:search)="onSearch($event)"
+      (bs:select)="onSelect($event)"
+    &gt;&lt;/banking-search&gt;
+  `</span>
+})
+<span style="color:#7dd3fc">export class</span> SearchBarComponent <span style="color:#7dd3fc">implements</span> OnInit {
+  @ViewChild(<span style="color:#86efac">'searchEl'</span>) searchEl!: ElementRef;
+  <span style="color:#7dd3fc">private</span> controller?: AbortController;
+
+  ngOnInit() {
+    <span style="color:#7dd3fc">this</span>.searchEl.nativeElement.filters = [
+      { id: <span style="color:#86efac">'all'</span>,          label: <span style="color:#86efac">'All'</span>          },
+      { id: <span style="color:#86efac">'accounts'</span>,     label: <span style="color:#86efac">'Accounts'</span>     },
+      { id: <span style="color:#86efac">'transactions'</span>, label: <span style="color:#86efac">'Transactions'</span> },
+    ];
+  }
+
+  <span style="color:#7dd3fc">async</span> onSearch({ detail }: CustomEvent) {
+    <span style="color:#7dd3fc">this</span>.controller?.abort();
+    <span style="color:#7dd3fc">this</span>.controller = <span style="color:#7dd3fc">new</span> AbortController();
+    <span style="color:#7dd3fc">const</span> el = <span style="color:#7dd3fc">this</span>.searchEl.nativeElement;
+    el.setAttribute(<span style="color:#86efac">'loading'</span>, <span style="color:#86efac">''</span>);
+    <span style="color:#7dd3fc">try</span> {
+      el.results = <span style="color:#7dd3fc">await</span> <span style="color:#7dd3fc">this</span>.api.search(detail.term, detail.filters, <span style="color:#7dd3fc">this</span>.controller.signal);
+    } <span style="color:#7dd3fc">catch</span> (err: <span style="color:#7dd3fc">any</span>) {
+      <span style="color:#7dd3fc">if</span> (err.name !== <span style="color:#86efac">'AbortError'</span>) el.setAttribute(<span style="color:#86efac">'error'</span>, <span style="color:#86efac">'network'</span>);
+    } <span style="color:#7dd3fc">finally</span> {
+      el.removeAttribute(<span style="color:#86efac">'loading'</span>);
+    }
+  }
+
+  onSelect({ detail }: CustomEvent) {
+    <span style="color:#7dd3fc">this</span>.router.navigate([detail.item.url]);
+  }
+}
+</code></pre>
+      </div>
+
+    </section>
+
+
+  </main>
+
+  <!--
   Import our Lit component from src/.
   Vite resolves TypeScript and serves it in dev mode.
   In production, swap this for: <script type="module" src="dist/banking-search.js"></script>
 -->
-<script type="module" src="../src/index.ts"></script>
+  <script type="module" src="../dist/banking-search.js"></script>
 
-<!-- ─── Demo wiring ─────────────────────────────────────────────────────── -->
-<script type="module">
+  <!-- ─── Demo wiring ─────────────────────────────────────────────────────── -->
+  <script type="module">
 
-// ── Mock data ───────────────────────────────────────────────────────────────
+    // ── Mock data ───────────────────────────────────────────────────────────────
 
-const MOCK_DATA = [
-  // Accounts
-  { id: 'acc-001', type: 'account', title: 'Primary Checking',        subtitle: '****4821 · Chase Bank',       badge: { label: 'Active',  variant: 'success' } },
-  { id: 'acc-002', type: 'account', title: 'Premium Savings',         subtitle: '****9102 · Chase Bank',       badge: { label: 'Active',  variant: 'success' } },
-  { id: 'acc-003', type: 'account', title: 'Business Checking Pro',   subtitle: '****3376 · Wells Fargo',      badge: { label: 'Active',  variant: 'success' } },
-  { id: 'acc-004', type: 'account', title: 'Old Savings Account',     subtitle: '****0012 · Bank of America',  badge: { label: 'Closed',  variant: 'neutral' } },
-  { id: 'acc-005', type: 'account', title: 'Emergency Fund',          subtitle: '****5543 · Ally Bank',        badge: { label: 'Active',  variant: 'success' } },
-  { id: 'acc-006', type: 'account', title: 'Joint Current Account',   subtitle: '****7721 · HSBC',             badge: { label: 'Active',  variant: 'success' } },
+    const MOCK_DATA = [
+      // Accounts
+      { id: 'acc-001', type: 'account', title: 'Primary Checking', subtitle: '****4821 · Chase Bank', badge: { label: 'Active', variant: 'success' } },
+      { id: 'acc-002', type: 'account', title: 'Premium Savings', subtitle: '****9102 · Chase Bank', badge: { label: 'Active', variant: 'success' } },
+      { id: 'acc-003', type: 'account', title: 'Business Checking Pro', subtitle: '****3376 · Wells Fargo', badge: { label: 'Active', variant: 'success' } },
+      { id: 'acc-004', type: 'account', title: 'Old Savings Account', subtitle: '****0012 · Bank of America', badge: { label: 'Closed', variant: 'neutral' } },
+      { id: 'acc-005', type: 'account', title: 'Emergency Fund', subtitle: '****5543 · Ally Bank', badge: { label: 'Active', variant: 'success' } },
+      { id: 'acc-006', type: 'account', title: 'Joint Current Account', subtitle: '****7721 · HSBC', badge: { label: 'Active', variant: 'success' } },
 
-  // Transactions
-  { id: 'txn-001', type: 'transaction', title: 'Amazon Purchase',          subtitle: '15 Mar 2026 · Debit',   badge: { label: '-$234.99',  variant: 'error'   } },
-  { id: 'txn-002', type: 'transaction', title: 'Salary Deposit',           subtitle: '1 Mar 2026 · Credit',   badge: { label: '+$5,200',   variant: 'success' } },
-  { id: 'txn-003', type: 'transaction', title: 'Netflix Subscription',     subtitle: '12 Mar 2026 · Debit',   badge: { label: '-$15.99',   variant: 'error'   } },
-  { id: 'txn-004', type: 'transaction', title: 'Wire Transfer — Johnson',  subtitle: '8 Mar 2026 · Debit',    badge: { label: '-$2,000',   variant: 'warning' } },
-  { id: 'txn-005', type: 'transaction', title: 'ATM Withdrawal',           subtitle: '5 Mar 2026 · Debit',    badge: { label: '-$200',     variant: 'error'   } },
-  { id: 'txn-006', type: 'transaction', title: 'Apple Pay — Starbucks',    subtitle: '28 Mar 2026 · Debit',   badge: { label: '-$6.75',    variant: 'error'   } },
-  { id: 'txn-007', type: 'transaction', title: 'Dividend Payment',         subtitle: '20 Mar 2026 · Credit',  badge: { label: '+$312.00',  variant: 'success' } },
+      // Transactions
+      { id: 'txn-001', type: 'transaction', title: 'Amazon Purchase', subtitle: '15 Mar 2026 · Debit', badge: { label: '-$234.99', variant: 'error' } },
+      { id: 'txn-002', type: 'transaction', title: 'Salary Deposit', subtitle: '1 Mar 2026 · Credit', badge: { label: '+$5,200', variant: 'success' } },
+      { id: 'txn-003', type: 'transaction', title: 'Netflix Subscription', subtitle: '12 Mar 2026 · Debit', badge: { label: '-$15.99', variant: 'error' } },
+      { id: 'txn-004', type: 'transaction', title: 'Wire Transfer — Johnson', subtitle: '8 Mar 2026 · Debit', badge: { label: '-$2,000', variant: 'warning' } },
+      { id: 'txn-005', type: 'transaction', title: 'ATM Withdrawal', subtitle: '5 Mar 2026 · Debit', badge: { label: '-$200', variant: 'error' } },
+      { id: 'txn-006', type: 'transaction', title: 'Apple Pay — Starbucks', subtitle: '28 Mar 2026 · Debit', badge: { label: '-$6.75', variant: 'error' } },
+      { id: 'txn-007', type: 'transaction', title: 'Dividend Payment', subtitle: '20 Mar 2026 · Credit', badge: { label: '+$312.00', variant: 'success' } },
 
-  // Customers
-  { id: 'cus-001', type: 'customer', title: 'James Whitfield',      subtitle: 'ID #CUS-29481 · Premier',   badge: { label: 'VIP',     variant: 'warning' } },
-  { id: 'cus-002', type: 'customer', title: 'Sarah Chen',           subtitle: 'ID #CUS-11034 · Standard',  badge: { label: 'Active',  variant: 'success' } },
-  { id: 'cus-003', type: 'customer', title: 'Marcus Thompson',      subtitle: 'ID #CUS-44821 · Standard',  badge: { label: 'Active',  variant: 'success' } },
-  { id: 'cus-004', type: 'customer', title: 'Priya Acharya',        subtitle: 'ID #CUS-78320 · Premier',   badge: { label: 'VIP',     variant: 'warning' } },
-  { id: 'cus-005', type: 'customer', title: 'David Okafor',         subtitle: 'ID #CUS-55102 · Business',  badge: { label: 'Active',  variant: 'success' } },
-  { id: 'cus-006', type: 'customer', title: 'Elena Vasquez',        subtitle: 'ID #CUS-63017 · Standard',  badge: { label: 'Frozen',  variant: 'error'   } },
+      // Customers
+      { id: 'cus-001', type: 'customer', title: 'James Whitfield', subtitle: 'ID #CUS-29481 · Premier', badge: { label: 'VIP', variant: 'warning' } },
+      { id: 'cus-002', type: 'customer', title: 'Sarah Chen', subtitle: 'ID #CUS-11034 · Standard', badge: { label: 'Active', variant: 'success' } },
+      { id: 'cus-003', type: 'customer', title: 'Marcus Thompson', subtitle: 'ID #CUS-44821 · Standard', badge: { label: 'Active', variant: 'success' } },
+      { id: 'cus-004', type: 'customer', title: 'Priya Acharya', subtitle: 'ID #CUS-78320 · Premier', badge: { label: 'VIP', variant: 'warning' } },
+      { id: 'cus-005', type: 'customer', title: 'David Okafor', subtitle: 'ID #CUS-55102 · Business', badge: { label: 'Active', variant: 'success' } },
+      { id: 'cus-006', type: 'customer', title: 'Elena Vasquez', subtitle: 'ID #CUS-63017 · Standard', badge: { label: 'Frozen', variant: 'error' } },
 
-  // Cards
-  { id: 'crd-001', type: 'card', title: 'Platinum Visa',        subtitle: '****1234 · Expires 09/27',  badge: { label: 'Active',   variant: 'success' } },
-  { id: 'crd-002', type: 'card', title: 'Business Amex Gold',   subtitle: '****5678 · Expires 03/26',  badge: { label: 'Active',   variant: 'success' } },
-  { id: 'crd-003', type: 'card', title: 'Rewards Mastercard',   subtitle: '****9012 · Expires 11/25',  badge: { label: 'Expired',  variant: 'error'   } },
-  { id: 'crd-004', type: 'card', title: 'Travel Debit Card',    subtitle: '****3344 · Expires 06/28',  badge: { label: 'Active',   variant: 'success' } },
-  { id: 'crd-005', type: 'card', title: 'Virtual Card — Shop',  subtitle: '****8801 · Expires 12/26',  badge: { label: 'Blocked',  variant: 'warning' } },
+      // Cards
+      { id: 'crd-001', type: 'card', title: 'Platinum Visa', subtitle: '****1234 · Expires 09/27', badge: { label: 'Active', variant: 'success' } },
+      { id: 'crd-002', type: 'card', title: 'Business Amex Gold', subtitle: '****5678 · Expires 03/26', badge: { label: 'Active', variant: 'success' } },
+      { id: 'crd-003', type: 'card', title: 'Rewards Mastercard', subtitle: '****9012 · Expires 11/25', badge: { label: 'Expired', variant: 'error' } },
+      { id: 'crd-004', type: 'card', title: 'Travel Debit Card', subtitle: '****3344 · Expires 06/28', badge: { label: 'Active', variant: 'success' } },
+      { id: 'crd-005', type: 'card', title: 'Virtual Card — Shop', subtitle: '****8801 · Expires 12/26', badge: { label: 'Blocked', variant: 'warning' } },
 
-  // Loans
-  { id: 'lon-001', type: 'loan', title: 'Home Mortgage',          subtitle: 'LN-88210 · 30yr Fixed 6.5%',   badge: { label: 'Current',  variant: 'success' } },
-  { id: 'lon-002', type: 'loan', title: 'Auto Loan',              subtitle: 'LN-45123 · 5yr Fixed 7.2%',    badge: { label: 'Current',  variant: 'success' } },
-  { id: 'lon-003', type: 'loan', title: 'Personal Loan',          subtitle: 'LN-33001 · 3yr Fixed 9.1%',    badge: { label: 'Overdue',  variant: 'error'   } },
-  { id: 'lon-004', type: 'loan', title: 'Student Loan Refinance', subtitle: 'LN-12044 · 10yr Fixed 5.4%',   badge: { label: 'Current',  variant: 'success' } },
+      // Loans
+      { id: 'lon-001', type: 'loan', title: 'Home Mortgage', subtitle: 'LN-88210 · 30yr Fixed 6.5%', badge: { label: 'Current', variant: 'success' } },
+      { id: 'lon-002', type: 'loan', title: 'Auto Loan', subtitle: 'LN-45123 · 5yr Fixed 7.2%', badge: { label: 'Current', variant: 'success' } },
+      { id: 'lon-003', type: 'loan', title: 'Personal Loan', subtitle: 'LN-33001 · 3yr Fixed 9.1%', badge: { label: 'Overdue', variant: 'error' } },
+      { id: 'lon-004', type: 'loan', title: 'Student Loan Refinance', subtitle: 'LN-12044 · 10yr Fixed 5.4%', badge: { label: 'Current', variant: 'success' } },
 
-  // Beneficiaries
-  { id: 'ben-001', type: 'beneficiary', title: 'Robert Johnson',        subtitle: 'BEN-001 · Chase ****9910',       badge: { label: 'Verified',   variant: 'success' } },
-  { id: 'ben-002', type: 'beneficiary', title: 'Acme Corp Payroll',     subtitle: 'BEN-002 · Wells Fargo ****4421', badge: { label: 'Verified',   variant: 'success' } },
-  { id: 'ben-003', type: 'beneficiary', title: 'UK HMRC Tax',           subtitle: 'BEN-003 · Sort 20-00-00',        badge: { label: 'Verified',   variant: 'success' } },
-  { id: 'ben-004', type: 'beneficiary', title: 'Landlord — Park Ave',   subtitle: 'BEN-004 · Citibank ****6631',    badge: { label: 'Unverified', variant: 'warning' } },
-  { id: 'ben-005', type: 'beneficiary', title: 'Sofia Marin',           subtitle: 'BEN-005 · IBAN ES91****2100',    badge: { label: 'Verified',   variant: 'success' } },
+      // Beneficiaries
+      { id: 'ben-001', type: 'beneficiary', title: 'Robert Johnson', subtitle: 'BEN-001 · Chase ****9910', badge: { label: 'Verified', variant: 'success' } },
+      { id: 'ben-002', type: 'beneficiary', title: 'Acme Corp Payroll', subtitle: 'BEN-002 · Wells Fargo ****4421', badge: { label: 'Verified', variant: 'success' } },
+      { id: 'ben-003', type: 'beneficiary', title: 'UK HMRC Tax', subtitle: 'BEN-003 · Sort 20-00-00', badge: { label: 'Verified', variant: 'success' } },
+      { id: 'ben-004', type: 'beneficiary', title: 'Landlord — Park Ave', subtitle: 'BEN-004 · Citibank ****6631', badge: { label: 'Unverified', variant: 'warning' } },
+      { id: 'ben-005', type: 'beneficiary', title: 'Sofia Marin', subtitle: 'BEN-005 · IBAN ES91****2100', badge: { label: 'Verified', variant: 'success' } },
 
-  // Standing Orders
-  { id: 'so-001', type: 'standing-order', title: 'Rent — Park Avenue',  subtitle: 'Monthly · 1st · $2,400',  badge: { label: 'Active',  variant: 'success' } },
-  { id: 'so-002', type: 'standing-order', title: 'Gym Membership',       subtitle: 'Monthly · 15th · $49',    badge: { label: 'Active',  variant: 'success' } },
-  { id: 'so-003', type: 'standing-order', title: 'Savings Transfer',     subtitle: 'Weekly · Mon · $250',     badge: { label: 'Active',  variant: 'success' } },
-  { id: 'so-004', type: 'standing-order', title: 'Charity — Red Cross',  subtitle: 'Monthly · 28th · $30',    badge: { label: 'Paused',  variant: 'neutral' } },
-  { id: 'so-005', type: 'standing-order', title: 'Insurance Premium',    subtitle: 'Quarterly · 1st · $310',  badge: { label: 'Active',  variant: 'success' } },
+      // Standing Orders
+      { id: 'so-001', type: 'standing-order', title: 'Rent — Park Avenue', subtitle: 'Monthly · 1st · $2,400', badge: { label: 'Active', variant: 'success' } },
+      { id: 'so-002', type: 'standing-order', title: 'Gym Membership', subtitle: 'Monthly · 15th · $49', badge: { label: 'Active', variant: 'success' } },
+      { id: 'so-003', type: 'standing-order', title: 'Savings Transfer', subtitle: 'Weekly · Mon · $250', badge: { label: 'Active', variant: 'success' } },
+      { id: 'so-004', type: 'standing-order', title: 'Charity — Red Cross', subtitle: 'Monthly · 28th · $30', badge: { label: 'Paused', variant: 'neutral' } },
+      { id: 'so-005', type: 'standing-order', title: 'Insurance Premium', subtitle: 'Quarterly · 1st · $310', badge: { label: 'Active', variant: 'success' } },
 
-  // Investments
-  { id: 'inv-001', type: 'investment', title: 'S&P 500 Index Fund',      subtitle: 'VFIAX · 124 units',            badge: { label: '+12.4%',   variant: 'success' } },
-  { id: 'inv-002', type: 'investment', title: 'Apple Inc.',               subtitle: 'AAPL · 45 shares',            badge: { label: '+8.2%',    variant: 'success' } },
-  { id: 'inv-003', type: 'investment', title: 'US Treasury Bond 2031',    subtitle: 'CUSIP 912828YK0 · $10,000',   badge: { label: '3.5% APY', variant: 'neutral' } },
-  { id: 'inv-004', type: 'investment', title: 'Emerging Markets ETF',     subtitle: 'VEIEX · 88 units',            badge: { label: '-4.1%',    variant: 'error'   } },
-  { id: 'inv-005', type: 'investment', title: 'Corporate Bond Portfolio', subtitle: 'PF-882 · $25,000 notional',   badge: { label: '5.1% APY', variant: 'neutral' } },
+      // Investments
+      { id: 'inv-001', type: 'investment', title: 'S&P 500 Index Fund', subtitle: 'VFIAX · 124 units', badge: { label: '+12.4%', variant: 'success' } },
+      { id: 'inv-002', type: 'investment', title: 'Apple Inc.', subtitle: 'AAPL · 45 shares', badge: { label: '+8.2%', variant: 'success' } },
+      { id: 'inv-003', type: 'investment', title: 'US Treasury Bond 2031', subtitle: 'CUSIP 912828YK0 · $10,000', badge: { label: '3.5% APY', variant: 'neutral' } },
+      { id: 'inv-004', type: 'investment', title: 'Emerging Markets ETF', subtitle: 'VEIEX · 88 units', badge: { label: '-4.1%', variant: 'error' } },
+      { id: 'inv-005', type: 'investment', title: 'Corporate Bond Portfolio', subtitle: 'PF-882 · $25,000 notional', badge: { label: '5.1% APY', variant: 'neutral' } },
 
-  // FX / Foreign Exchange
-  { id: 'fx-001', type: 'fx', title: 'EUR/USD Forward',     subtitle: 'FX-3310 · EUR 50,000 · 15 Apr 2026', badge: { label: 'Open',    variant: 'success' } },
-  { id: 'fx-002', type: 'fx', title: 'GBP/JPY Spot',        subtitle: 'FX-3298 · GBP 20,000 · Settled',     badge: { label: 'Settled', variant: 'neutral' } },
-  { id: 'fx-003', type: 'fx', title: 'USD/CHF Limit Order', subtitle: 'FX-3401 · USD 30,000 · Rate 0.8850', badge: { label: 'Pending', variant: 'warning' } },
-  { id: 'fx-004', type: 'fx', title: 'AUD/USD Spot',        subtitle: 'FX-3289 · AUD 15,000 · Settled',     badge: { label: 'Settled', variant: 'neutral' } },
+      // FX / Foreign Exchange
+      { id: 'fx-001', type: 'fx', title: 'EUR/USD Forward', subtitle: 'FX-3310 · EUR 50,000 · 15 Apr 2026', badge: { label: 'Open', variant: 'success' } },
+      { id: 'fx-002', type: 'fx', title: 'GBP/JPY Spot', subtitle: 'FX-3298 · GBP 20,000 · Settled', badge: { label: 'Settled', variant: 'neutral' } },
+      { id: 'fx-003', type: 'fx', title: 'USD/CHF Limit Order', subtitle: 'FX-3401 · USD 30,000 · Rate 0.8850', badge: { label: 'Pending', variant: 'warning' } },
+      { id: 'fx-004', type: 'fx', title: 'AUD/USD Spot', subtitle: 'FX-3289 · AUD 15,000 · Settled', badge: { label: 'Settled', variant: 'neutral' } },
 
-  // Payments
-  { id: 'pay-001', type: 'payment', title: 'Invoice #INV-2291',       subtitle: 'Acme Corp · Due 10 Apr 2026',  badge: { label: 'Pending',    variant: 'warning' } },
-  { id: 'pay-002', type: 'payment', title: 'Invoice #INV-2187',       subtitle: 'TechSupplies Ltd · Paid',      badge: { label: 'Paid',       variant: 'success' } },
-  { id: 'pay-003', type: 'payment', title: 'Payroll Run — Mar 2026',  subtitle: '42 employees · $184,320',      badge: { label: 'Processed',  variant: 'success' } },
-  { id: 'pay-004', type: 'payment', title: 'SWIFT Transfer SWIFT9921',subtitle: 'Deutsche Bank · EUR 12,500',   badge: { label: 'In Transit', variant: 'warning' } },
-  { id: 'pay-005', type: 'payment', title: 'Tax Payment Q1 2026',     subtitle: 'IRS · $8,420',                 badge: { label: 'Scheduled',  variant: 'neutral' } },
+      // Payments
+      { id: 'pay-001', type: 'payment', title: 'Invoice #INV-2291', subtitle: 'Acme Corp · Due 10 Apr 2026', badge: { label: 'Pending', variant: 'warning' } },
+      { id: 'pay-002', type: 'payment', title: 'Invoice #INV-2187', subtitle: 'TechSupplies Ltd · Paid', badge: { label: 'Paid', variant: 'success' } },
+      { id: 'pay-003', type: 'payment', title: 'Payroll Run — Mar 2026', subtitle: '42 employees · $184,320', badge: { label: 'Processed', variant: 'success' } },
+      { id: 'pay-004', type: 'payment', title: 'SWIFT Transfer SWIFT9921', subtitle: 'Deutsche Bank · EUR 12,500', badge: { label: 'In Transit', variant: 'warning' } },
+      { id: 'pay-005', type: 'payment', title: 'Tax Payment Q1 2026', subtitle: 'IRS · $8,420', badge: { label: 'Scheduled', variant: 'neutral' } },
 
-  // Insurance
-  { id: 'ins-001', type: 'insurance', title: 'Home & Contents',        subtitle: 'POL-44821 · Renews Jun 2026',  badge: { label: 'Active',  variant: 'success' } },
-  { id: 'ins-002', type: 'insurance', title: 'Life Cover — Term 20yr', subtitle: 'POL-38812 · $500,000 cover',   badge: { label: 'Active',  variant: 'success' } },
-  { id: 'ins-003', type: 'insurance', title: 'Vehicle Insurance',      subtitle: 'POL-51003 · Renews Jan 2027',  badge: { label: 'Active',  variant: 'success' } },
-  { id: 'ins-004', type: 'insurance', title: 'Travel Insurance — EU',  subtitle: 'POL-60120 · Valid 1-30 Apr',   badge: { label: 'Active',  variant: 'success' } },
-  { id: 'ins-005', type: 'insurance', title: 'Business Liability',     subtitle: 'POL-72910 · Renews Sep 2026',  badge: { label: 'Lapsed',  variant: 'error'   } },
-];
+      // Insurance
+      { id: 'ins-001', type: 'insurance', title: 'Home & Contents', subtitle: 'POL-44821 · Renews Jun 2026', badge: { label: 'Active', variant: 'success' } },
+      { id: 'ins-002', type: 'insurance', title: 'Life Cover — Term 20yr', subtitle: 'POL-38812 · $500,000 cover', badge: { label: 'Active', variant: 'success' } },
+      { id: 'ins-003', type: 'insurance', title: 'Vehicle Insurance', subtitle: 'POL-51003 · Renews Jan 2027', badge: { label: 'Active', variant: 'success' } },
+      { id: 'ins-004', type: 'insurance', title: 'Travel Insurance — EU', subtitle: 'POL-60120 · Valid 1-30 Apr', badge: { label: 'Active', variant: 'success' } },
+      { id: 'ins-005', type: 'insurance', title: 'Business Liability', subtitle: 'POL-72910 · Renews Sep 2026', badge: { label: 'Lapsed', variant: 'error' } },
+    ];
 
-// Filter chip id -> data type
-const FILTER_TYPE_MAP = {
-  accounts:          'account',
-  transactions:      'transaction',
-  customers:         'customer',
-  cards:             'card',
-  loans:             'loan',
-  beneficiaries:     'beneficiary',
-  'standing-orders': 'standing-order',
-  investments:       'investment',
-  fx:                'fx',
-  payments:          'payment',
-  insurance:         'insurance',
-};
+    // Filter chip id -> data type
+    const FILTER_TYPE_MAP = {
+      accounts: 'account',
+      transactions: 'transaction',
+      customers: 'customer',
+      cards: 'card',
+      loans: 'loan',
+      beneficiaries: 'beneficiary',
+      'standing-orders': 'standing-order',
+      investments: 'investment',
+      fx: 'fx',
+      payments: 'payment',
+      insurance: 'insurance',
+    };
 
-const GROUP_ORDER = [
-  'account', 'customer', 'transaction', 'card', 'loan',
-  'beneficiary', 'standing-order', 'investment', 'fx', 'payment', 'insurance',
-];
+    const GROUP_ORDER = [
+      'account', 'customer', 'transaction', 'card', 'loan',
+      'beneficiary', 'standing-order', 'investment', 'fx', 'payment', 'insurance',
+    ];
 
-function searchMockData(term, filters) {
-  const q = term.toLowerCase();
-  // "all" or empty → no type restriction. Otherwise collect all active type strings.
-  const activeTypes = filters.includes('all')
-    ? null
-    : filters.map(f => FILTER_TYPE_MAP[f]).filter(Boolean);
-
-  const items = MOCK_DATA.filter(item => {
-    if (activeTypes && !activeTypes.includes(item.type)) return false;
-    return item.title.toLowerCase().includes(q) ||
-           (item.subtitle ?? '').toLowerCase().includes(q);
-  });
-
-  const groups = {};
-  items.forEach(item => {
-    if (!groups[item.type]) {
-      groups[item.type] = { groupId: item.type, label: labelFor(item.type), items: [] };
-    }
-    groups[item.type].items.push(item);
-  });
-
-  const result = GROUP_ORDER.map(t => groups[t]).filter(Boolean);
-  result.forEach(g => { g.total = g.items.length; });
-  return result;
-}
-
-function labelFor(type) {
-  return ({
-    account:          'Accounts',
-    transaction:      'Transactions',
-    customer:         'Customers',
-    card:             'Cards',
-    loan:             'Loans',
-    beneficiary:      'Beneficiaries',
-    'standing-order': 'Standing Orders',
-    investment:       'Investments',
-    fx:               'FX / Foreign Exchange',
-    payment:          'Payments',
-    insurance:        'Insurance',
-  })[type] ?? type;
-}
-
-// ── Demo wiring ─────────────────────────────────────────────────────────────
-
-const el       = document.getElementById('search');
-const logEl    = document.getElementById('event-log');
-let scenario   = 'normal';
-let simDelay   = 600;
-let controller;
-let simulatedOffline = false;
-
-// Stores the full flat result set for the current paginated search so that
-// bs:load-more can return the correct slice without re-running the search.
-let paginatedPool = [];
-const PAGE_SIZE   = 5; // must match page-size attribute on the element
-
-// Set initial filters — 12 total, exercises the overflow "More" button
-el.filters = [
-  { id: 'all',             label: 'All'            },
-  { id: 'accounts',        label: 'Accounts'        },
-  { id: 'transactions',    label: 'Transactions'    },
-  { id: 'customers',       label: 'Customers'       },
-  { id: 'cards',           label: 'Cards'           },
-  { id: 'loans',           label: 'Loans'           },
-  { id: 'beneficiaries',   label: 'Beneficiaries'   },
-  { id: 'standing-orders', label: 'Standing Orders' },
-  { id: 'investments',     label: 'Investments'     },
-  { id: 'fx',              label: 'FX'              },
-  { id: 'payments',        label: 'Payments'        },
-  { id: 'insurance',       label: 'Insurance'       },
-];
-
-// bs:search — simulate async fetch with scenario branching
-el.addEventListener('bs:search', async ({ detail }) => {
-  controller?.abort();
-  controller = new AbortController();
-
-  el.setAttribute('loading', '');
-  el.removeAttribute('error');
-  const filtersLabel = detail.filters.join(', ');
-  updatePills(filtersLabel, '...');
-  log('bs:search', `term="${detail.term}" filters=[${filtersLabel}]`);
-
-  try {
-    await sleep(simDelay, controller.signal);
-  } catch {
-    return; // aborted — newer search fired
-  }
-
-  switch (scenario) {
-    case 'normal': {
-      const data = searchMockData(detail.term, detail.filters);
-      el.results = data;
-      el.removeAttribute('has-more');
-      const total = data.reduce((s, g) => s + g.items.length, 0);
-      updatePills(detail.filters.join(', '), total);
-      break;
-    }
-    case 'paginated': {
-      // Flat results so pagination is easy to follow in the log.
-      const activeTypes = detail.filters.includes('all')
+    function searchMockData(term, filters) {
+      const q = term.toLowerCase();
+      // "all" or empty → no type restriction. Otherwise collect all active type strings.
+      const activeTypes = filters.includes('all')
         ? null
-        : detail.filters.map(f => FILTER_TYPE_MAP[f]).filter(Boolean);
-      const q = detail.term.toLowerCase();
-      paginatedPool = MOCK_DATA.filter(item => {
+        : filters.map(f => FILTER_TYPE_MAP[f]).filter(Boolean);
+
+      const items = MOCK_DATA.filter(item => {
         if (activeTypes && !activeTypes.includes(item.type)) return false;
         return item.title.toLowerCase().includes(q) ||
-               (item.subtitle ?? '').toLowerCase().includes(q);
+          (item.subtitle ?? '').toLowerCase().includes(q);
       });
-      // Return only the first page; set has-more if there are additional pages.
-      el.results = paginatedPool.slice(0, PAGE_SIZE);
-      el.toggleAttribute('has-more', paginatedPool.length > PAGE_SIZE);
-      updatePills(detail.filter, paginatedPool.length);
-      log('bs:search', `paginated — ${paginatedPool.length} total, page 1 of ${Math.ceil(paginatedPool.length / PAGE_SIZE)}`);
-      break;
+
+      const groups = {};
+      items.forEach(item => {
+        if (!groups[item.type]) {
+          groups[item.type] = { groupId: item.type, label: labelFor(item.type), items: [] };
+        }
+        groups[item.type].items.push(item);
+      });
+
+      const result = GROUP_ORDER.map(t => groups[t]).filter(Boolean);
+      result.forEach(g => { g.total = g.items.length; });
+      return result;
     }
-    case 'empty':
-      el.results = [];
-      el.removeAttribute('has-more');
-      updatePills(detail.filter, 0);
-      break;
-    case 'loading-stuck':
-      return; // leave loading state — never resolve
-    case 'network-error':
-      el.setAttribute('error', 'network');
-      updatePills(detail.filter, 'Error');
-      break;
-    case 'timeout':
-      el.setAttribute('error', 'timeout');
-      updatePills(detail.filter, 'Error');
-      break;
-    case 'rate-limited':
-      el.setAttribute('error', 'rate-limited');
-      updatePills(detail.filter, 'Error');
-      break;
-    case 'server-error':
-      el.setAttribute('error', 'server');
-      updatePills(detail.filter, 'Error');
-      break;
-  }
 
-  el.removeAttribute('loading');
-});
+    function labelFor(type) {
+      return ({
+        account: 'Accounts',
+        transaction: 'Transactions',
+        customer: 'Customers',
+        card: 'Cards',
+        loan: 'Loans',
+        beneficiary: 'Beneficiaries',
+        'standing-order': 'Standing Orders',
+        investment: 'Investments',
+        fx: 'FX / Foreign Exchange',
+        payment: 'Payments',
+        insurance: 'Insurance',
+      })[type] ?? type;
+    }
 
-el.addEventListener('bs:select', ({ detail }) => {
-  log('bs:select', `id="${detail.item.id}" title="${detail.item.title}"`);
-});
+    // ── Demo wiring ─────────────────────────────────────────────────────────────
 
-el.addEventListener('bs:filter-change', ({ detail }) => {
-  const label = detail.filters.join(', ');
-  log('bs:filter-change', `filters=[${label}]`);
-  document.getElementById('filter-pill').textContent = `Filter: ${label}`;
-});
+    const el = document.getElementById('search');
+    const logEl = document.getElementById('event-log');
+    let scenario = 'normal';
+    let simDelay = 600;
+    let controller;
+    let simulatedOffline = false;
 
-el.addEventListener('bs:clear', () => {
-  log('bs:clear', '—');
-  updatePills('all', '—');
-});
+    // Stores the full flat result set for the current paginated search so that
+    // bs:load-more can return the correct slice without re-running the search.
+    let paginatedPool = [];
+    const PAGE_SIZE = 5; // must match page-size attribute on the element
 
-el.addEventListener('bs:retry', ({ detail }) => {
-  log('bs:retry', `term="${detail.term}" filter="${detail.filter}"`);
-  el.removeAttribute('error');
-  el.dispatchEvent(new CustomEvent('bs:search', {
-    detail: { ...detail, requestId: crypto.randomUUID() },
-    bubbles: true, composed: true,
-  }));
-});
+    // Set initial filters — 12 total, exercises the overflow "More" button
+    el.filters = [
+      { id: 'all', label: 'All' },
+      { id: 'accounts', label: 'Accounts' },
+      { id: 'transactions', label: 'Transactions' },
+      { id: 'customers', label: 'Customers' },
+      { id: 'cards', label: 'Cards' },
+      { id: 'loans', label: 'Loans' },
+      { id: 'beneficiaries', label: 'Beneficiaries' },
+      { id: 'standing-orders', label: 'Standing Orders' },
+      { id: 'investments', label: 'Investments' },
+      { id: 'fx', label: 'FX' },
+      { id: 'payments', label: 'Payments' },
+      { id: 'insurance', label: 'Insurance' },
+    ];
 
-el.addEventListener('bs:open',  () => log('bs:open',  '—'));
-el.addEventListener('bs:close', () => log('bs:close', '—'));
+    // bs:search — simulate async fetch with scenario branching
+    el.addEventListener('bs:search', async ({ detail }) => {
+      controller?.abort();
+      controller = new AbortController();
 
-// bs:load-more — append the next batch from paginatedPool and update has-more.
-el.addEventListener('bs:load-more', async ({ detail }) => {
-  log('bs:load-more', `page=${detail.page} term="${detail.term}" filter="${detail.filter}"`);
+      el.setAttribute('loading', '');
+      el.removeAttribute('error');
+      const filtersLabel = detail.filters.join(', ');
+      updatePills(filtersLabel, '...');
+      log('bs:search', `term="${detail.term}" filters=[${filtersLabel}]`);
 
-  if (scenario !== 'paginated') {
-    // For non-paginated scenarios just clear has-more so the spinner goes away.
-    await sleep(600);
-    el.removeAttribute('has-more');
-    return;
-  }
+      try {
+        await sleep(simDelay, controller.signal);
+      } catch {
+        return; // aborted — newer search fired
+      }
 
-  try {
-    await sleep(simDelay, controller?.signal);
-  } catch {
-    return; // aborted by a new search
-  }
+      switch (scenario) {
+        case 'normal': {
+          const data = searchMockData(detail.term, detail.filters);
+          el.results = data;
+          el.removeAttribute('has-more');
+          const total = data.reduce((s, g) => s + g.items.length, 0);
+          updatePills(detail.filters.join(', '), total);
+          break;
+        }
+        case 'paginated': {
+          // Flat results so pagination is easy to follow in the log.
+          const activeTypes = detail.filters.includes('all')
+            ? null
+            : detail.filters.map(f => FILTER_TYPE_MAP[f]).filter(Boolean);
+          const q = detail.term.toLowerCase();
+          paginatedPool = MOCK_DATA.filter(item => {
+            if (activeTypes && !activeTypes.includes(item.type)) return false;
+            return item.title.toLowerCase().includes(q) ||
+              (item.subtitle ?? '').toLowerCase().includes(q);
+          });
+          // Return only the first page; set has-more if there are additional pages.
+          el.results = paginatedPool.slice(0, PAGE_SIZE);
+          el.toggleAttribute('has-more', paginatedPool.length > PAGE_SIZE);
+          updatePills(detail.filter, paginatedPool.length);
+          log('bs:search', `paginated — ${paginatedPool.length} total, page 1 of ${Math.ceil(paginatedPool.length / PAGE_SIZE)}`);
+          break;
+        }
+        case 'empty':
+          el.results = [];
+          el.removeAttribute('has-more');
+          updatePills(detail.filter, 0);
+          break;
+        case 'loading-stuck':
+          return; // leave loading state — never resolve
+        case 'network-error':
+          el.setAttribute('error', 'network');
+          updatePills(detail.filter, 'Error');
+          break;
+        case 'timeout':
+          el.setAttribute('error', 'timeout');
+          updatePills(detail.filter, 'Error');
+          break;
+        case 'rate-limited':
+          el.setAttribute('error', 'rate-limited');
+          updatePills(detail.filter, 'Error');
+          break;
+        case 'server-error':
+          el.setAttribute('error', 'server');
+          updatePills(detail.filter, 'Error');
+          break;
+      }
 
-  const offset = (detail.page - 1) * PAGE_SIZE;
-  const nextBatch = paginatedPool.slice(offset, offset + PAGE_SIZE);
-
-  // Append to whatever the component currently holds (flat array).
-  el.results = [...el.results, ...nextBatch];
-
-  const hasMore = offset + PAGE_SIZE < paginatedPool.length;
-  el.toggleAttribute('has-more', hasMore);
-
-  const totalPages = Math.ceil(paginatedPool.length / PAGE_SIZE);
-  log('bs:load-more', `delivered page ${detail.page}/${totalPages} (+${nextBatch.length} items)${hasMore ? ' — more available' : ' — end of results'}`);
-});
-
-// ── Utilities ────────────────────────────────────────────────────────────────
-
-function sleep(ms, signal) {
-  return new Promise((resolve, reject) => {
-    const id = setTimeout(resolve, ms);
-    signal?.addEventListener('abort', () => {
-      clearTimeout(id);
-      reject(new DOMException('Aborted', 'AbortError'));
+      el.removeAttribute('loading');
     });
-  });
-}
 
-function log(event, detail) {
-  const now  = new Date();
-  const time = [now.getHours(), now.getMinutes(), now.getSeconds()]
-    .map(n => String(n).padStart(2, '0')).join(':')
-    + '.' + String(now.getMilliseconds()).padStart(3, '0');
-  const empty = logEl.querySelector('.log-empty');
-  if (empty) empty.remove();
-  const line = document.createElement('div');
-  line.className = 'log-line';
-  // Log content is constructed from safe constant strings — not user input
-  line.innerHTML = `<span class="log-time">${time}</span><span class="log-event">${event}</span><span class="log-detail">${detail}</span>`;
-  logEl.prepend(line);
-}
+    el.addEventListener('bs:select', ({ detail }) => {
+      log('bs:select', `id="${detail.item.id}" title="${detail.item.title}"`);
+    });
 
-function updatePills(filter, results) {
-  document.getElementById('filter-pill').textContent  = `Filter: ${filter}`;
-  document.getElementById('results-pill').textContent = `Results: ${results}`;
-}
+    el.addEventListener('bs:filter-change', ({ detail }) => {
+      const label = detail.filters.join(', ');
+      log('bs:filter-change', `filters=[${label}]`);
+      document.getElementById('filter-pill').textContent = `Filter: ${label}`;
+    });
 
-// ── Global handlers (called from inline onclick attributes) ──────────────────
-// Exposed on window because <button onclick="..."> requires global scope,
-// while this script runs as a module (which has its own scope by default).
+    el.addEventListener('bs:clear', () => {
+      log('bs:clear', '—');
+      updatePills('all', '—');
+    });
 
-window.clearLog = () => {
-  logEl.innerHTML = '<div class="log-empty">— events will appear here as you interact —</div>';
-};
+    el.addEventListener('bs:retry', ({ detail }) => {
+      log('bs:retry', `term="${detail.term}" filter="${detail.filter}"`);
+      el.removeAttribute('error');
+      el.dispatchEvent(new CustomEvent('bs:search', {
+        detail: { ...detail, requestId: crypto.randomUUID() },
+        bubbles: true, composed: true,
+      }));
+    });
 
-window.setScenario = (name) => {
-  scenario = name;
-  document.querySelectorAll('[id^="btn-"]').forEach(b => b.classList.remove('active'));
-  document.getElementById(`btn-${name}`)?.classList.add('active');
-  el.removeAttribute('loading');
-  el.removeAttribute('error');
-  el.results = [];
-};
+    el.addEventListener('bs:open', () => log('bs:open', '—'));
+    el.addEventListener('bs:close', () => log('bs:close', '—'));
 
-window.simulateOffline = () => {
-  simulatedOffline = !simulatedOffline;
-  window.dispatchEvent(new Event(simulatedOffline ? 'offline' : 'online'));
-  log(simulatedOffline ? 'window:offline' : 'window:online', '— simulated');
-  document.getElementById('status-dot').className = 'status-dot ' + (simulatedOffline ? 'error' : 'online');
-  document.getElementById('status-text').textContent = simulatedOffline
-    ? 'Offline — Search unavailable'
-    : 'Online — Ready';
-};
+    // bs:load-more — append the next batch from paginatedPool and update has-more.
+    el.addEventListener('bs:load-more', async ({ detail }) => {
+      log('bs:load-more', `page=${detail.page} term="${detail.term}" filter="${detail.filter}"`);
 
-window.setComponentTheme = (theme) => {
-  el.setAttribute('theme', theme);
-  ['light', 'dark', 'auto'].forEach(t => {
-    document.getElementById(`theme-${t}`)?.classList.toggle('active', t === theme);
-  });
-  log('theme-change', `theme="${theme}"`);
-};
+      if (scenario !== 'paginated') {
+        // For non-paginated scenarios just clear has-more so the spinner goes away.
+        await sleep(600);
+        el.removeAttribute('has-more');
+        return;
+      }
 
-window.togglePageDark = () => {
-  const html = document.documentElement;
-  const isDark = html.getAttribute('data-page-theme') === 'dark';
-  html.setAttribute('data-page-theme', isDark ? 'light' : 'dark');
-};
+      try {
+        await sleep(simDelay, controller?.signal);
+      } catch {
+        return; // aborted by a new search
+      }
 
-window.updateDelay = (val) => {
-  simDelay = parseInt(val, 10);
-  document.getElementById('delay-label').textContent = `${val}ms`;
-  document.getElementById('delay-slider').setAttribute('aria-valuenow', val);
-};
+      const offset = (detail.page - 1) * PAGE_SIZE;
+      const nextBatch = paginatedPool.slice(offset, offset + PAGE_SIZE);
 
-</script>
+      // Append to whatever the component currently holds (flat array).
+      el.results = [...el.results, ...nextBatch];
+
+      const hasMore = offset + PAGE_SIZE < paginatedPool.length;
+      el.toggleAttribute('has-more', hasMore);
+
+      const totalPages = Math.ceil(paginatedPool.length / PAGE_SIZE);
+      log('bs:load-more', `delivered page ${detail.page}/${totalPages} (+${nextBatch.length} items)${hasMore ? ' — more available' : ' — end of results'}`);
+    });
+
+    // ── Utilities ────────────────────────────────────────────────────────────────
+
+    function sleep(ms, signal) {
+      return new Promise((resolve, reject) => {
+        const id = setTimeout(resolve, ms);
+        signal?.addEventListener('abort', () => {
+          clearTimeout(id);
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
+      });
+    }
+
+    function log(event, detail) {
+      const now = new Date();
+      const time = [now.getHours(), now.getMinutes(), now.getSeconds()]
+        .map(n => String(n).padStart(2, '0')).join(':')
+        + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const empty = logEl.querySelector('.log-empty');
+      if (empty) empty.remove();
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      // Log content is constructed from safe constant strings — not user input
+      line.innerHTML = `<span class="log-time">${time}</span><span class="log-event">${event}</span><span class="log-detail">${detail}</span>`;
+      logEl.prepend(line);
+    }
+
+    function updatePills(filter, results) {
+      document.getElementById('filter-pill').textContent = `Filter: ${filter}`;
+      document.getElementById('results-pill').textContent = `Results: ${results}`;
+    }
+
+    // ── Global handlers (called from inline onclick attributes) ──────────────────
+    // Exposed on window because <button onclick="..."> requires global scope,
+    // while this script runs as a module (which has its own scope by default).
+
+    window.clearLog = () => {
+      logEl.innerHTML = '<div class="log-empty">— events will appear here as you interact —</div>';
+    };
+
+    window.setScenario = (name) => {
+      scenario = name;
+      document.querySelectorAll('[id^="btn-"]').forEach(b => b.classList.remove('active'));
+      document.getElementById(`btn-${name}`)?.classList.add('active');
+      el.removeAttribute('loading');
+      el.removeAttribute('error');
+      el.results = [];
+    };
+
+    window.simulateOffline = () => {
+      simulatedOffline = !simulatedOffline;
+      window.dispatchEvent(new Event(simulatedOffline ? 'offline' : 'online'));
+      log(simulatedOffline ? 'window:offline' : 'window:online', '— simulated');
+      document.getElementById('status-dot').className = 'status-dot ' + (simulatedOffline ? 'error' : 'online');
+      document.getElementById('status-text').textContent = simulatedOffline
+        ? 'Offline — Search unavailable'
+        : 'Online — Ready';
+    };
+
+    window.setComponentTheme = (theme) => {
+      el.setAttribute('theme', theme);
+      ['light', 'dark', 'auto'].forEach(t => {
+        document.getElementById(`theme-${t}`)?.classList.toggle('active', t === theme);
+      });
+      log('theme-change', `theme="${theme}"`);
+    };
+
+    window.togglePageDark = () => {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-page-theme') === 'dark';
+      html.setAttribute('data-page-theme', isDark ? 'light' : 'dark');
+    };
+
+    window.updateDelay = (val) => {
+      simDelay = parseInt(val, 10);
+      document.getElementById('delay-label').textContent = `${val}ms`;
+      document.getElementById('delay-slider').setAttribute('aria-valuenow', val);
+    };
+
+
+    // ── Code tab switcher ────────────────────────────────────────────────────────
+
+    window.switchTab = (panelId, clickedBtn) => {
+      const bar = clickedBtn.closest('.tab-bar');
+      bar.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      bar.parentElement.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      clickedBtn.classList.add('active');
+      clickedBtn.setAttribute('aria-selected', 'true');
+      document.getElementById(`tab-${panelId}`)?.classList.add('active');
+    };
+
+    // ── Property Playground ──────────────────────────────────────────────────────
+
+    // Reads each attribute from the live element and syncs the control to its
+    // current value. Called once on load so the controls start in a known state.
+    function initPlayground() {
+      const read = (attr, fallback) => el.getAttribute(attr) ?? fallback;
+
+      // Text inputs
+      document.getElementById('pg-placeholder').value = read('placeholder', 'Search accounts, customers, transactions…');
+      document.getElementById('pg-no-results-text').value = read('no-results-text', 'No results found');
+      document.getElementById('pg-hint').value = read('hint', '');
+
+      // Sliders
+      const minChars = read('min-chars', '1');
+      const debounceMs = read('debounce-ms', '300');
+      const pageSize = read('page-size', '5');
+      document.getElementById('pg-min-chars').value = minChars;
+      document.getElementById('pg-debounce-ms').value = debounceMs;
+      document.getElementById('pg-page-size').value = pageSize;
+      document.getElementById('pg-min-chars-val').textContent = minChars;
+      document.getElementById('pg-debounce-ms-val').textContent = debounceMs + 'ms';
+      document.getElementById('pg-page-size-val').textContent = pageSize;
+
+      // Toggles
+      const hlOn = el.hasAttribute('highlight-matches');
+      document.getElementById('pg-highlight-matches').checked = hlOn;
+      document.getElementById('pg-highlight-matches-label').textContent = hlOn ? 'on' : 'off';
+
+      const disabledOn = el.hasAttribute('disabled');
+      document.getElementById('pg-disabled').checked = disabledOn;
+      document.getElementById('pg-disabled-label').textContent = disabledOn ? 'on' : 'off';
+    }
+
+    window.applyProp = (attr, value) => {
+      el.setAttribute(attr, value);
+    };
+
+    window.applyPropNum = (attr, labelId, value, suffix = '') => {
+      el.setAttribute(attr, value);
+      document.getElementById(labelId).textContent = value + suffix;
+    };
+
+    window.applyPropBool = (attr, checked) => {
+      if (checked) {
+        el.setAttribute(attr, '');
+      } else {
+        el.removeAttribute(attr);
+      }
+      const labelId = `pg-${attr}-label`;
+      const labelEl = document.getElementById(labelId);
+      if (labelEl) labelEl.textContent = checked ? 'on' : 'off';
+      log('prop-change', `${attr}=${checked}`);
+    };
+
+    // Wait for the element to be defined before reading its attributes
+    customElements.whenDefined('banking-search').then(initPlayground);
+
+  </script>
 </body>
+
 </html>

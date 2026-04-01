@@ -29,3 +29,5 @@ npm-debug.log*
 # Playwright test browsers
 /test-results/
 /playwright-report/
+/plan.md
+/*.pdf

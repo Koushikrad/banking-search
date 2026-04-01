@@ -327,7 +327,7 @@ export const styles = css`
   .search-hint {
     margin: 0;
     padding: 6px 12px 2px;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--bs-text-secondary);
   }
 
