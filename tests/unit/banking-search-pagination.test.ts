@@ -128,6 +128,18 @@ describe('_flatResults()', () => {
     (el as any)._visibleCount = 50; // larger than total
     expect((el as any)._flatResults()).toHaveLength(8);
   });
+
+  it('flattens grouped results and applies _visibleCount across groups', async () => {
+    const el = await mount();
+    el.pageSize = 5;
+    const grouped: SearchResultGroup[] = [
+      { groupId: 'a', label: 'A', items: items(4) },
+      { groupId: 'b', label: 'B', items: items(6) },
+    ];
+    el.results = grouped;
+    (el as any)._visibleCount = 5; // should see 4 from A + 1 from B
+    expect((el as any)._flatResults()).toHaveLength(5);
+  });
 });
 
 describe('results setter', () => {
@@ -225,7 +237,7 @@ describe('_onLoadMore()', () => {
     (el as any)._visibleCount  = 5;
     (el as any)._page          = 1;
     (el as any)._inputValue    = 'test';
-    (el as any)._activeFilter  = 'all';
+    (el as any)._activeFilters = ['all'];
     await el.updateComplete;
 
     const fired: BsLoadMoreDetail[] = [];
@@ -238,9 +250,33 @@ describe('_onLoadMore()', () => {
     expect(fired).toHaveLength(1);
     expect(fired[0].page).toBe(2);
     expect(fired[0].term).toBe('test');
+    expect(fired[0].filters).toEqual(['all']);
     expect(fired[0].filter).toBe('all');
     expect(fired[0].requestId).toBeTruthy();
     expect((el as any)._loadingMore).toBe(true);
+  });
+
+  it('bs:load-more detail carries all active filters when multiple are selected', async () => {
+    const el = await mount();
+    el.pageSize = 5;
+    el.results  = items(5);
+    el.setAttribute('has-more', '');
+    (el as any)._visibleCount  = 5;
+    (el as any)._page          = 1;
+    (el as any)._inputValue    = 'test';
+    (el as any)._activeFilters = ['accounts', 'transactions'];
+    await el.updateComplete;
+
+    const fired: BsLoadMoreDetail[] = [];
+    el.addEventListener('bs:load-more', (e: Event) => {
+      fired.push((e as CustomEvent<BsLoadMoreDetail>).detail);
+    });
+
+    (el as any)._onLoadMore();
+
+    expect(fired[0].filters).toEqual(['accounts', 'transactions']);
+    // compat alias is first non-all filter
+    expect(fired[0].filter).toBe('accounts');
   });
 
   it('does not fire bs:load-more when in-memory items still exceed visible window', async () => {
@@ -439,40 +475,42 @@ describe('filter chip arrow key navigation', () => {
     await el.updateComplete;
   }
 
-  it('ArrowRight moves to next chip and fires bs:filter-change', async () => {
+  it('ArrowRight moves focus to next chip and activates it', async () => {
     const el = await mount();
     el.filters = [
-      { id: 'all',  label: 'All'  },
-      { id: 'acc',  label: 'Acc'  },
-      { id: 'txn',  label: 'Txn'  },
+      { id: 'all', label: 'All' },
+      { id: 'acc', label: 'Acc' },
+      { id: 'txn', label: 'Txn' },
     ];
-    (el as any)._activeFilter = 'all';
+    (el as any)._focusedFilterId = 'all';
     await el.updateComplete;
 
-    const events: string[] = [];
+    const events: string[][] = [];
     el.addEventListener('bs:filter-change', (e: Event) => {
-      events.push((e as CustomEvent).detail.filter);
+      events.push((e as CustomEvent).detail.filters);
     });
 
     await pressKey(el, 'ArrowRight');
 
-    expect((el as any)._activeFilter).toBe('acc');
-    expect(events).toContain('acc');
+    expect((el as any)._focusedFilterId).toBe('acc');
+    expect((el as any)._activeFilters).toContain('acc');
+    expect(events.length).toBeGreaterThan(0);
   });
 
-  it('ArrowLeft moves to previous chip', async () => {
+  it('ArrowLeft moves focus to previous chip', async () => {
     const el = await mount();
     el.filters = [
-      { id: 'all',  label: 'All'  },
-      { id: 'acc',  label: 'Acc'  },
-      { id: 'txn',  label: 'Txn'  },
+      { id: 'all', label: 'All' },
+      { id: 'acc', label: 'Acc' },
+      { id: 'txn', label: 'Txn' },
     ];
-    (el as any)._activeFilter = 'acc';
+    (el as any)._focusedFilterId = 'acc';
+    (el as any)._activeFilters   = ['acc'];
     await el.updateComplete;
 
     await pressKey(el, 'ArrowLeft');
 
-    expect((el as any)._activeFilter).toBe('all');
+    expect((el as any)._focusedFilterId).toBe('all');
   });
 
   it('ArrowRight wraps from last chip back to first', async () => {
@@ -481,55 +519,233 @@ describe('filter chip arrow key navigation', () => {
       { id: 'all', label: 'All' },
       { id: 'acc', label: 'Acc' },
     ];
-    (el as any)._activeFilter = 'acc';
+    (el as any)._focusedFilterId = 'acc';
+    (el as any)._activeFilters   = ['acc'];
     await el.updateComplete;
 
     await pressKey(el, 'ArrowRight');
 
-    expect((el as any)._activeFilter).toBe('all');
+    expect((el as any)._focusedFilterId).toBe('all');
   });
 
-  it('Home key jumps to first chip', async () => {
+  it('Home key jumps focus to first chip', async () => {
     const el = await mount();
     el.filters = [
       { id: 'a', label: 'A' },
       { id: 'b', label: 'B' },
       { id: 'c', label: 'C' },
     ];
-    (el as any)._activeFilter = 'c';
+    (el as any)._focusedFilterId = 'c';
+    (el as any)._activeFilters   = ['c'];
     await el.updateComplete;
 
     await pressKey(el, 'Home');
 
-    expect((el as any)._activeFilter).toBe('a');
+    expect((el as any)._focusedFilterId).toBe('a');
   });
 
-  it('End key jumps to last visible chip', async () => {
+  it('End key jumps focus to last visible chip', async () => {
     const el = await mount();
     el.filters = [
       { id: 'a', label: 'A' },
       { id: 'b', label: 'B' },
       { id: 'c', label: 'C' },
     ];
-    (el as any)._activeFilter = 'a';
+    (el as any)._focusedFilterId = 'a';
+    (el as any)._activeFilters   = ['a'];
     await el.updateComplete;
 
     await pressKey(el, 'End');
 
-    expect((el as any)._activeFilter).toBe('c');
+    expect((el as any)._focusedFilterId).toBe('c');
   });
 
   it('navigates only among visible chips when collapsed', async () => {
     const el = await mount();
-    // 6 chips, collapsed shows first 4
     el.filters = Array.from({ length: 6 }, (_, i) => ({ id: `f${i}`, label: `F${i}` }));
-    (el as any)._activeFilter     = 'f3'; // last visible chip
+    (el as any)._focusedFilterId  = 'f3'; // last visible chip
+    (el as any)._activeFilters    = ['f3'];
     (el as any)._filtersExpanded  = false;
     await el.updateComplete;
 
     await pressKey(el, 'ArrowRight');
 
     // Wraps within visible 4 — goes back to f0
-    expect((el as any)._activeFilter).toBe('f0');
+    expect((el as any)._focusedFilterId).toBe('f0');
+  });
+});
+
+// =============================================================================
+// Multi-select filter state machine
+// =============================================================================
+
+describe('multi-select filter logic (_fireFilterChange)', () => {
+  it('selecting a specific filter removes "all" from active set', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all', label: 'All' },
+      { id: 'accounts', label: 'Accounts' },
+    ];
+    (el as any)._activeFilters = ['all'];
+    await el.updateComplete;
+
+    (el as any)._fireFilterChange('accounts');
+
+    expect((el as any)._activeFilters).toEqual(['accounts']);
+    expect((el as any)._activeFilters).not.toContain('all');
+  });
+
+  it('selecting "all" clears every specific filter', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all', label: 'All' },
+      { id: 'accounts', label: 'Accounts' },
+      { id: 'cards', label: 'Cards' },
+    ];
+    (el as any)._activeFilters = ['accounts', 'cards'];
+    await el.updateComplete;
+
+    (el as any)._fireFilterChange('all');
+
+    expect((el as any)._activeFilters).toEqual(['all']);
+  });
+
+  it('deselecting the only specific filter falls back to "all"', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all', label: 'All' },
+      { id: 'accounts', label: 'Accounts' },
+    ];
+    (el as any)._activeFilters = ['accounts'];
+    await el.updateComplete;
+
+    (el as any)._fireFilterChange('accounts'); // toggle off
+
+    // Nothing left — must fall back to 'all', never allow empty selection
+    expect((el as any)._activeFilters).toEqual(['all']);
+  });
+
+  it('toggling a second filter adds it without removing the first', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all',      label: 'All'      },
+      { id: 'accounts', label: 'Accounts' },
+      { id: 'cards',    label: 'Cards'    },
+    ];
+    (el as any)._activeFilters = ['accounts'];
+    await el.updateComplete;
+
+    (el as any)._fireFilterChange('cards');
+
+    expect((el as any)._activeFilters).toContain('accounts');
+    expect((el as any)._activeFilters).toContain('cards');
+    expect((el as any)._activeFilters).not.toContain('all');
+  });
+
+  it('deselecting one of two active filters leaves the other active', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all',      label: 'All'          },
+      { id: 'accounts', label: 'Accounts'     },
+      { id: 'cards',    label: 'Cards'        },
+    ];
+    (el as any)._activeFilters = ['accounts', 'cards'];
+    await el.updateComplete;
+
+    (el as any)._fireFilterChange('accounts'); // deselect
+
+    expect((el as any)._activeFilters).toEqual(['cards']);
+  });
+
+  it('bs:filter-change carries correct filters[] and filter compat alias', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all',      label: 'All'      },
+      { id: 'accounts', label: 'Accounts' },
+      { id: 'cards',    label: 'Cards'    },
+    ];
+    (el as any)._activeFilters = ['accounts'];
+    (el as any)._inputValue    = ''; // below minChars — no search fires
+    await el.updateComplete;
+
+    const events: Array<{ filters: string[]; filter: string }> = [];
+    el.addEventListener('bs:filter-change', (e: Event) => {
+      events.push((e as CustomEvent).detail);
+    });
+
+    (el as any)._fireFilterChange('cards'); // adds cards alongside accounts
+
+    expect(events).toHaveLength(1);
+    expect(events[0].filters).toContain('accounts');
+    expect(events[0].filters).toContain('cards');
+    // compat alias is first non-all filter found in the new set
+    expect(events[0].filter).not.toBe('all');
+  });
+
+  it('bs:filter-change detail when "all" is selected has filter="all"', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all', label: 'All' },
+      { id: 'acc', label: 'Acc' },
+    ];
+    (el as any)._activeFilters = ['acc'];
+    (el as any)._inputValue    = '';
+    await el.updateComplete;
+
+    const events: Array<{ filters: string[]; filter: string }> = [];
+    el.addEventListener('bs:filter-change', (e: Event) => {
+      events.push((e as CustomEvent).detail);
+    });
+
+    (el as any)._fireFilterChange('all');
+
+    expect(events[0].filters).toEqual(['all']);
+    expect(events[0].filter).toBe('all');
+  });
+});
+
+// =============================================================================
+// hasMore attribute flip clears _loadingMore
+// =============================================================================
+
+describe('hasMore attribute flip (updated() guard)', () => {
+  it('clears _loadingMore when hasMore goes from true to false mid-flight', async () => {
+    const el = await mount();
+    el.setAttribute('has-more', '');
+    (el as any)._loadingMore = true;
+    await el.updateComplete;
+
+    // Host signals last page — removes has-more
+    el.removeAttribute('has-more');
+    await el.updateComplete;
+
+    // updated() should have cleared the stale flag
+    expect((el as any)._loadingMore).toBe(false);
+  });
+
+  it('does not change _loadingMore when hasMore is still true', async () => {
+    const el = await mount();
+    el.setAttribute('has-more', '');
+    (el as any)._loadingMore = true;
+    await el.updateComplete;
+
+    // Trigger an unrelated update (change placeholder)
+    el.placeholder = 'updated';
+    await el.updateComplete;
+
+    // _loadingMore should be unchanged — hasMore is still true
+    expect((el as any)._loadingMore).toBe(true);
+  });
+
+  it('does not change _loadingMore when hasMore goes false but was not loading', async () => {
+    const el = await mount();
+    el.setAttribute('has-more', '');
+    (el as any)._loadingMore = false;
+    await el.updateComplete;
+
+    el.removeAttribute('has-more');
+    await el.updateComplete;
+
+    expect((el as any)._loadingMore).toBe(false);
   });
 });

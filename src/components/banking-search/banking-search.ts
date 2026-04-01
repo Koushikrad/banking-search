@@ -48,6 +48,22 @@ const FILTERS_VISIBLE = 4;
 // ---------------------------------------------------------------------------
 // Type guard — distinguishes flat vs grouped results
 // ---------------------------------------------------------------------------
+
+/**
+ * Returns true when `results` is a `SearchResultGroup[]` (grouped mode).
+ *
+ * The test is intentionally minimal: presence of `groupId: string` on the
+ * first element. This keeps the guard O(1) and avoids iterating the array.
+ *
+ * Rendering contract:
+ *   isGrouped() === true  → _renderResults() uses the grouped path (group headers)
+ *   isGrouped() === false → _renderResults() uses the flat path (no headers)
+ *
+ * The `has-more` attribute does NOT influence this decision. Grouping is
+ * entirely driven by the shape of the data the host provides.
+ * See SearchResultGroup in banking-search.types.ts for the full pagination
+ * accumulation contract when using has-more with grouped results.
+ */
 function isGrouped(results: SearchResults): results is SearchResultGroup[] {
   return (
     results.length > 0 &&
@@ -184,9 +200,32 @@ export class BankingSearch extends LitElement {
   // -------------------------------------------------------------------------
 
   /**
-   * Search results — set by the host after a bs:search event.
-   * Accepts flat SearchResultItem[] or grouped SearchResultGroup[].
-   * Reference-equality guard prevents unnecessary re-renders.
+   * Search results — set by the host after receiving a `bs:search` event.
+   *
+   * Accepts either:
+   * - `SearchResultItem[]` — flat list (no group headers)
+   * - `SearchResultGroup[]` — grouped list (sticky group headers)
+   *
+   * The component replaces its internal state on every assignment. It does
+   * NOT append internally. This means for paginated scenarios (`has-more`)
+   * the host is responsible for accumulating result pages before assigning:
+   *
+   * ```typescript
+   * // Flat pagination:
+   * accumulated = [...accumulated, ...newPage.items];
+   * el.results = accumulated;
+   *
+   * // Grouped pagination (backend returns groups per page):
+   * newPage.groups.forEach(g => {
+   *   const existing = acc.find(a => a.groupId === g.groupId);
+   *   existing ? existing.items.push(...g.items) : acc.push(g);
+   * });
+   * el.results = [...acc];
+   * ```
+   *
+   * The reference-equality guard (`value === this._results`) prevents
+   * unnecessary re-renders when the same array reference is reassigned.
+   * Always assign a new array reference after mutating.
    */
   get results(): SearchResults {
     return this._results;
@@ -194,8 +233,9 @@ export class BankingSearch extends LitElement {
   set results(value: SearchResults) {
     if (value === this._results) return;
     this._results = value;
-    // When the host appends a new page of results, expand the visible window
-    // to show the newly added items and mark the in-flight request as done.
+    // When the host sets results in response to bs:load-more, expand the
+    // visible window by one page and clear the in-flight flag so the
+    // sentinel can fire again on the next scroll.
     if (this._loadingMore) {
       this._visibleCount += this.pageSize;
       this._loadingMore = false;
@@ -231,7 +271,17 @@ export class BankingSearch extends LitElement {
 
   @state() private _open = false;
   @state() private _activeIndex = -1;
-  @state() private _activeFilter = 'all';
+
+  /**
+   * Currently active filter IDs.
+   * "all" is mutually exclusive with every other filter:
+   *   - Selecting "all" clears all specific filters.
+   *   - Selecting any specific filter removes "all".
+   *   - Deselecting the last specific filter falls back to ["all"].
+   * Multiple specific filters can be active simultaneously.
+   */
+  @state() private _activeFilters: string[] = ['all'];
+
   @state() private _offline = false;
   @state() private _inputValue = '';
 
@@ -246,6 +296,14 @@ export class BankingSearch extends LitElement {
 
   /** Whether the filter bar is showing all chips or only the first FILTERS_VISIBLE. */
   @state() private _filtersExpanded = false;
+
+  /**
+   * Which chip currently holds the roving tabindex="0" focus stop.
+   * Separate from _activeFilters — a chip can be focused without being selected
+   * and multiple chips can be selected but only one has the tab stop.
+   * Initialised to 'all'; updated on every filter interaction and arrow navigation.
+   */
+  @state() private _focusedFilterId = 'all';
 
   // -------------------------------------------------------------------------
   // Shadow DOM element refs (resolved after first render)
@@ -337,7 +395,7 @@ export class BankingSearch extends LitElement {
     const total = visibleFilters.length;
     if (!total) return;
 
-    const currentIdx  = visibleFilters.findIndex(f => f.id === this._activeFilter);
+    const currentIdx   = visibleFilters.findIndex(f => f.id === this._focusedFilterId);
     const effectiveIdx = Math.max(currentIdx, 0);
     let nextIdx: number | null = null;
 
@@ -652,7 +710,8 @@ export class BankingSearch extends LitElement {
       this._page++;
       const detail: BsLoadMoreDetail = {
         term:      this._inputValue,
-        filter:    this._activeFilter,
+        filters:   this._activeFilters,
+        filter:    this._activeFilters.find(f => f !== 'all') ?? 'all',
         page:      this._page,
         requestId: crypto.randomUUID(),
       };
@@ -694,7 +753,8 @@ export class BankingSearch extends LitElement {
     this._loadingMore = false;
     const detail: BsSearchDetail = {
       term,
-      filter: this._activeFilter,
+      filters:   this._activeFilters,
+      filter:    this._activeFilters.find(f => f !== 'all') ?? 'all',
       requestId: crypto.randomUUID(),
     };
     const wasOpen = this._open;
@@ -713,8 +773,29 @@ export class BankingSearch extends LitElement {
   }
 
   private _fireFilterChange(filterId: string): void {
-    this._activeFilter = filterId;
-    this._emit('bs:filter-change', { filter: filterId } as BsFilterChangeDetail);
+    if (filterId === 'all') {
+      // "All" clears every specific selection
+      this._activeFilters = ['all'];
+    } else {
+      // Toggle this filter; remove "all" if it was the only active one
+      const without = this._activeFilters.filter(f => f !== 'all' && f !== filterId);
+      const wasActive = this._activeFilters.includes(filterId);
+      if (wasActive) {
+        // Deselect — fall back to "all" if nothing left
+        this._activeFilters = without.length > 0 ? without : ['all'];
+      } else {
+        // Select — add to set, remove "all"
+        this._activeFilters = [...without, filterId];
+      }
+    }
+
+    this._focusedFilterId = filterId;
+
+    const detail: BsFilterChangeDetail = {
+      filters: this._activeFilters,
+      filter:  this._activeFilters.find(f => f !== 'all') ?? 'all',
+    };
+    this._emit('bs:filter-change', detail);
     if (this._inputValue.length >= this.minChars) {
       this._fireSearch(this._inputValue);
     }
@@ -722,8 +803,9 @@ export class BankingSearch extends LitElement {
 
   private _fireRetry(): void {
     const detail: BsRetryDetail = {
-      term: this._inputValue,
-      filter: this._activeFilter,
+      term:    this._inputValue,
+      filters: this._activeFilters,
+      filter:  this._activeFilters.find(f => f !== 'all') ?? 'all',
     };
     this._emit('bs:retry', detail);
     this.loading = true;
@@ -879,7 +961,8 @@ export class BankingSearch extends LitElement {
       const detail: BsErrorDetail = {
         code:      newVal,
         term:      this._inputValue,
-        filter:    this._activeFilter,
+        filters:   this._activeFilters,
+        filter:    this._activeFilters.find(f => f !== 'all') ?? 'all',
         timestamp: Date.now(),
       };
       this._emit('bs:error', detail);
@@ -944,7 +1027,7 @@ export class BankingSearch extends LitElement {
         ${this._filters.length > 0 ? html`
           <div
             class="filter-bar"
-            role="radiogroup"
+            role="group"
             aria-label="Filter results"
             @keydown=${this._onFilterBarKeydown}
           >
@@ -953,10 +1036,9 @@ export class BankingSearch extends LitElement {
                 : this._filters.slice(0, FILTERS_VISIBLE)
               ).map(f => html`
               <button
-                class="filter-chip ${this._activeFilter === f.id ? 'active' : ''}"
-                role="radio"
-                aria-checked=${this._activeFilter === f.id ? 'true' : 'false'}
-                tabindex=${this._activeFilter === f.id ? '0' : '-1'}
+                class="filter-chip ${this._activeFilters.includes(f.id) ? 'active' : ''}"
+                aria-pressed=${this._activeFilters.includes(f.id) ? 'true' : 'false'}
+                tabindex=${this._focusedFilterId === f.id ? '0' : '-1'}
                 @click=${() => this._fireFilterChange(f.id)}
               >
                 ${f.label}

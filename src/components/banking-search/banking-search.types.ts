@@ -82,7 +82,70 @@ export interface SearchResultItem {
 
 /**
  * A labelled group of results (e.g. "Accounts", "Transactions").
- * The component accepts either a flat SearchResultItem[] or SearchResultGroup[].
+ *
+ * The component accepts either a flat `SearchResultItem[]` or a
+ * `SearchResultGroup[]`. The shape of the array drives rendering:
+ *
+ *   Flat array   → single list, no group headers
+ *   Grouped array → each group gets a sticky header + item rows
+ *
+ * The `has-more` attribute does NOT override this choice — grouping is
+ * always determined by what the host puts into `el.results`. This means
+ * grouped results are fully supported alongside `has-more` pagination,
+ * subject to one host-side responsibility: page accumulation (see below).
+ *
+ * ## Grouped Pagination Contract (has-more = true + grouped results)
+ *
+ * When `has-more` is true and the component fires `bs:load-more`, the host
+ * fetches the next page. If the backend returns grouped results, the host
+ * MUST merge the new page into the existing accumulated groups before
+ * setting `el.results` — the component replaces its internal state on each
+ * assignment, it does not append internally.
+ *
+ * The host is responsible for this merge:
+ *
+ * ```typescript
+ * // Host-side accumulation pattern for grouped pagination:
+ * let accumulated: SearchResultGroup[] = [];
+ *
+ * el.addEventListener('bs:load-more', async ({ detail }) => {
+ *   const page = await api.search(detail); // returns SearchResultGroup[]
+ *
+ *   page.groups.forEach((newGroup: SearchResultGroup) => {
+ *     const existing = accumulated.find(g => g.groupId === newGroup.groupId);
+ *     if (existing) {
+ *       existing.items.push(...newGroup.items); // merge into existing group
+ *     } else {
+ *       accumulated.push(newGroup);             // new group from this page
+ *     }
+ *   });
+ *
+ *   el.results = [...accumulated]; // always set the full accumulated state
+ *   // has-more stays true until the backend signals the last page
+ *   if (!page.hasMore) el.removeAttribute('has-more');
+ * });
+ *
+ * // On new search, reset accumulated:
+ * el.addEventListener('bs:search', async ({ detail }) => {
+ *   accumulated = [];
+ *   // ... fetch page 1 ...
+ * });
+ * ```
+ *
+ * ## Flat Pagination Contract (has-more = true + flat results)
+ *
+ * Simpler — the host concatenates pages into a flat array:
+ *
+ * ```typescript
+ * let accumulated: SearchResultItem[] = [];
+ *
+ * el.addEventListener('bs:load-more', async ({ detail }) => {
+ *   const page = await api.search(detail);
+ *   accumulated = [...accumulated, ...page.items];
+ *   el.results = accumulated;
+ *   if (!page.hasMore) el.removeAttribute('has-more');
+ * });
+ * ```
  */
 export interface SearchResultGroup {
   /** Stable group identifier (e.g. 'accounts', 'transactions'). */
@@ -93,18 +156,27 @@ export interface SearchResultGroup {
 
   /**
    * Total server-side hit count for this group.
-   * May exceed items.length when the server returns a subset.
-   * Displayed as "(N total)" next to the group header when present.
+   * May exceed `items.length` when the server returns a subset.
+   * Rendered as "(N total)" next to the group header when present.
    */
   total?: number;
 
+  /** Result rows belonging to this group. */
   items: SearchResultItem[];
 }
 
 /**
- * The `results` property accepts either:
- * - A flat array of items (no grouping, rendered as a single list)
- * - An array of groups (each group renders a header + its items)
+ * The `results` property on `<banking-search>` accepts either:
+ *
+ * - **`SearchResultItem[]`** — flat list, no group headers rendered.
+ * - **`SearchResultGroup[]`** — renders a sticky header per group.
+ *
+ * The component detects the mode by checking for the presence of `groupId`
+ * on the first element (see `isGrouped()` in banking-search.ts). This means
+ * the **host controls grouping by choosing which shape to provide** — the
+ * `has-more` attribute has no bearing on this decision.
+ *
+ * See `SearchResultGroup` docs above for the full pagination contract.
  */
 export type SearchResults = SearchResultItem[] | SearchResultGroup[];
 
@@ -154,6 +226,16 @@ export type ErrorCode =
 /** Detail shape for the `bs:search` event. */
 export interface BsSearchDetail {
   term: string;
+  /**
+   * All currently active filter IDs.
+   * "all" means no specific filter is applied.
+   * Multiple specific filters may be active simultaneously.
+   */
+  filters: string[];
+  /**
+   * Backward-compatible alias — the first active non-"all" filter, or "all".
+   * Hosts that only support single-select can read this field unchanged.
+   */
   filter: string;
   /** Monotonic ID per search invocation — lets the host cancel in-flight requests. */
   requestId: string;
@@ -166,34 +248,68 @@ export interface BsSelectDetail {
 
 /** Detail shape for the `bs:filter-change` event. */
 export interface BsFilterChangeDetail {
+  /** All currently active filter IDs. */
+  filters: string[];
+  /** Backward-compatible alias — first active non-"all" filter, or "all". */
   filter: string;
 }
 
 /** Detail shape for the `bs:retry` event. */
 export interface BsRetryDetail {
   term: string;
-  filter: string;
+  filters: string[];
+  filter: string; // compat alias
 }
 
 /** Detail shape for the `bs:error` event — used by the host for observability logging. */
 export interface BsErrorDetail {
   code: string;
   term: string;
-  filter: string;
+  filters: string[];
+  filter: string; // compat alias
   timestamp: number;
 }
 
 /**
  * Detail shape for the `bs:load-more` event.
- * Fired when the user scrolls to the bottom of the results and `has-more` is true.
- * The host should fetch the next page and append items to `el.results`.
+ *
+ * Fired when the sentinel element at the bottom of the dropdown scrolls into
+ * view AND `has-more` is true (set by the host on the element attribute).
+ *
+ * The host must:
+ * 1. Fetch the next page using `term`, `filters`, and `page`.
+ * 2. Accumulate all results fetched so far (merge grouped or concatenate flat).
+ * 3. Set the full accumulated result on `el.results`.
+ * 4. Remove the `has-more` attribute when the backend signals no more pages.
+ *
+ * Use `requestId` with an AbortController to cancel stale requests if the
+ * user triggers a new `bs:search` before the load-more fetch completes.
+ *
+ * Example:
+ * ```typescript
+ * el.addEventListener('bs:load-more', async ({ detail }) => {
+ *   controller?.abort();
+ *   controller = new AbortController();
+ *   try {
+ *     const page = await api.search(detail, controller.signal);
+ *     accumulated = [...accumulated, ...page.items]; // or merge groups
+ *     el.results = accumulated;
+ *     if (!page.hasMore) el.removeAttribute('has-more');
+ *   } catch (err) {
+ *     if (err.name !== 'AbortError') el.setAttribute('error', 'network');
+ *   }
+ * });
+ * ```
  */
 export interface BsLoadMoreDetail {
   term: string;
+  /** All currently active filter IDs — pass to the backend as-is. */
+  filters: string[];
+  /** Backward-compatible alias — first active non-"all" filter, or "all". */
   filter: string;
-  /** 1-based page number — increments on each load-more trigger. */
+  /** 1-based page number — increments by 1 on each load-more trigger. Resets to 1 on new search. */
   page: number;
-  /** Stable ID per request — use to cancel in-flight fetches on new searches. */
+  /** Unique ID for this request — use with AbortController to cancel stale fetches. */
   requestId: string;
 }
 

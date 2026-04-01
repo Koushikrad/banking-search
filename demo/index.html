@@ -574,12 +574,15 @@ const GROUP_ORDER = [
   'beneficiary', 'standing-order', 'investment', 'fx', 'payment', 'insurance',
 ];
 
-function searchMockData(term, filter) {
+function searchMockData(term, filters) {
   const q = term.toLowerCase();
-  const typeFilter = FILTER_TYPE_MAP[filter];
+  // "all" or empty → no type restriction. Otherwise collect all active type strings.
+  const activeTypes = filters.includes('all')
+    ? null
+    : filters.map(f => FILTER_TYPE_MAP[f]).filter(Boolean);
 
   const items = MOCK_DATA.filter(item => {
-    if (typeFilter && item.type !== typeFilter) return false;
+    if (activeTypes && !activeTypes.includes(item.type)) return false;
     return item.title.toLowerCase().includes(q) ||
            (item.subtitle ?? '').toLowerCase().includes(q);
   });
@@ -650,8 +653,9 @@ el.addEventListener('bs:search', async ({ detail }) => {
 
   el.setAttribute('loading', '');
   el.removeAttribute('error');
-  updatePills(detail.filter, '...');
-  log('bs:search', `term="${detail.term}" filter="${detail.filter}"`);
+  const filtersLabel = detail.filters.join(', ');
+  updatePills(filtersLabel, '...');
+  log('bs:search', `term="${detail.term}" filters=[${filtersLabel}]`);
 
   try {
     await sleep(simDelay, controller.signal);
@@ -661,19 +665,21 @@ el.addEventListener('bs:search', async ({ detail }) => {
 
   switch (scenario) {
     case 'normal': {
-      const data = searchMockData(detail.term, detail.filter);
+      const data = searchMockData(detail.term, detail.filters);
       el.results = data;
       el.removeAttribute('has-more');
       const total = data.reduce((s, g) => s + g.items.length, 0);
-      updatePills(detail.filter, total);
+      updatePills(detail.filters.join(', '), total);
       break;
     }
     case 'paginated': {
       // Flat results so pagination is easy to follow in the log.
+      const activeTypes = detail.filters.includes('all')
+        ? null
+        : detail.filters.map(f => FILTER_TYPE_MAP[f]).filter(Boolean);
       const q = detail.term.toLowerCase();
-      const typeFilter = FILTER_TYPE_MAP[detail.filter];
       paginatedPool = MOCK_DATA.filter(item => {
-        if (typeFilter && item.type !== typeFilter) return false;
+        if (activeTypes && !activeTypes.includes(item.type)) return false;
         return item.title.toLowerCase().includes(q) ||
                (item.subtitle ?? '').toLowerCase().includes(q);
       });
@@ -717,8 +723,9 @@ el.addEventListener('bs:select', ({ detail }) => {
 });
 
 el.addEventListener('bs:filter-change', ({ detail }) => {
-  log('bs:filter-change', `filter="${detail.filter}"`);
-  document.getElementById('filter-pill').textContent = `Filter: ${detail.filter}`;
+  const label = detail.filters.join(', ');
+  log('bs:filter-change', `filters=[${label}]`);
+  document.getElementById('filter-pill').textContent = `Filter: ${label}`;
 });
 
 el.addEventListener('bs:clear', () => {

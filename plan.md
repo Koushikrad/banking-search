@@ -38,19 +38,15 @@
 | `placeholder`        | `string`               | `"Search..."`        | Input placeholder text                           |
 | `debounce-ms`        | `number`               | `300`                | Milliseconds to debounce input before firing event |
 | `min-chars`          | `number`               | `2`                  | Minimum characters before search fires           |
-| `max-results`        | `number`               | `10`                 | Cap on visible results per group                 |
+| `page-size`          | `number`               | `10`                 | Items revealed per page / per load-more scroll   |
+| `has-more`           | `boolean`              | `false`              | Tells the component the server has more pages; triggers `bs:load-more` sentinel |
 | `theme`              | `light \| dark \| auto`| `auto`               | Color scheme; `auto` follows `prefers-color-scheme` |
 | `loading`            | `boolean`              | `false`              | Shows a loading skeleton/spinner                 |
 | `disabled`           | `boolean`              | `false`              | Disables interaction                             |
 | `highlight-matches`  | `boolean`              | `true`               | Bold-highlights matched substrings in results    |
 | `no-results-text`    | `string`               | `"No results found"` | Empty-state message                              |
 | `search-label`       | `string`               | `"Search"`           | `aria-label` on the input (i18n)                 |
-
-### Attributes / Reflected Properties (continued)
-
-| Attribute    | Type     | Default                   | Description                                           |
-|--------------|----------|---------------------------|-------------------------------------------------------|
-| `hint`       | `string` | `"Type {n}+ characters…"` | Hint shown before min-chars threshold is reached      |
+| `hint`               | `string`               | `"Type {n}+ characters…"` | Hint shown before min-chars threshold is reached |
 
 > **Note:** No validation error is shown for min/max chars. The component silently waits. This is a search input, not a form field — the user hasn't done anything wrong. A neutral `hint` text is sufficient.
 
@@ -58,7 +54,7 @@
 
 | Property      | Type                                            | Description                                              |
 |---------------|-------------------------------------------------|----------------------------------------------------------|
-| `results`     | `SearchResult[]`                                | Set programmatically — triggers re-render                |
+| `results`     | `SearchResults` (`SearchResultItem[]` \| `SearchResultGroup[]`) | Set programmatically — triggers re-render. Component does **not** append internally; host must accumulate pages. |
 | `filters`     | `FilterOption[]`                                | Available filter chips                                   |
 | `renderItem`  | `((item: SearchResultItem) => HTMLElement) \| null` | Optional custom item renderer. Return a DOM node. Falls back to default template if not set. |
 
@@ -66,14 +62,15 @@
 
 | Event               | `detail` shape                        | When fired                          |
 |---------------------|---------------------------------------|-------------------------------------|
-| `bs:search`         | `{ term: string, filter: string }`    | Debounced input change (≥ min-chars) |
+| `bs:search`         | `{ term, filters: string[], filter: string, requestId }` | Debounced input change (≥ min-chars). `filter` is compat alias = first non-all filter or `'all'`. |
 | `bs:select`         | `{ item: SearchResultItem }`          | User selects a result               |
-| `bs:filter-change`  | `{ filter: string }`                  | Active filter changes               |
+| `bs:filter-change`  | `{ filters: string[], filter: string }` | Active filter set changes. Fires before `bs:search` when input is long enough. |
+| `bs:load-more`      | `{ term, filters, filter, page, requestId }` | Sentinel enters view with `has-more=true`. Host must accumulate + re-set `el.results`. |
 | `bs:clear`          | `{}`                                  | Input cleared                       |
 | `bs:open`           | `{}`                                  | Dropdown opens                      |
 | `bs:close`          | `{}`                                  | Dropdown closes                     |
-| `bs:retry`          | `{ term: string, filter: string }`    | Retry button clicked after an error  |
-| `bs:error`          | `{ code: string, term: string, filter: string, timestamp: number }` | Error attribute set — for host observability logging |
+| `bs:retry`          | `{ term, filters: string[], filter }` | Retry button clicked after an error  |
+| `bs:error`          | `{ code, term, filters, filter, timestamp }` | Error attribute set — for host observability logging |
 
 ### Named Slots (Extensibility)
 
@@ -741,16 +738,18 @@ Decisions made during implementation that differ from the original plan, or feat
 | 1 | `max-results` attribute (cap per group) | Replaced with `page-size` + `has-more` (pagination system) | Richer UX — scroll/arrow-key to load more rather than hard cap |
 | 2 | Click-outside via `pointerdown` on `document` | `focusout` + `relatedTarget` + `shadowRoot.contains()` | Handles keyboard Tab-out for free; no document-level listener; Shadow DOM retargeting is simpler with `relatedTarget` |
 | 3 | Filter overflow as a dropdown (`role="listbox"`) | Collapse/expand toggle with "+N more" dashed button | Simpler UX for a filter bar; no nested ARIA listbox needed; revisit if axe audit flags |
-| 4 | `BsSearchDetail` with `{ term, filter }` | Added `requestId: string` to every search-related event | Enables `AbortController` cancellation pattern on the host side |
-| 5 | `bs:load-more` event — not in original plan | Added with `{ term, filter, page, requestId }` detail | Required by pagination system; documented in `banking-search.types.ts` |
+| 4 | `BsSearchDetail` with `{ term, filter }` | `{ term, filters: string[], filter, requestId }` | Multi-select requires `filters[]`; `filter` kept as compat alias; `requestId` enables AbortController cancellation |
+| 5 | `bs:load-more` event — not in original plan | Added with `{ term, filters, filter, page, requestId }` detail | Required by pagination system; all filter state forwarded to backend |
 | 6 | `aria-expanded` as boolean property | Must be string `'true'`/`'false'` | Lit renders boolean properties as empty-string attributes; ARIA requires the string value |
 | 7 | `_onFocusOut` using `composedPath()` | Uses `relatedTarget` check | `composedPath()` always includes `this` when registered on `this`; `relatedTarget` correctly identifies where focus is going |
 | 8 | `_unsafeSvg()` home-rolled via `innerHTML` | Lit's `unsafeSVG()` directive | Official API; no manual template cloning |
 | 9 | `"dev": "vite demo"` script | `"dev": "vite"` | Setting root to `demo/` broke `vite.config.ts` pickup |
 | 10 | `min-chars="2"` in demo | Changed to `min-chars="1"` | Easier to demo pagination and results during review |
 | 11 | `ArrowUp` from first result wraps to input | Wraps within listbox (to last item) | Consistent with most combobox implementations; re-raising if accessibility audit disagrees |
-| 12 | Multi-select filters | Not in original plan | User request — planned as Phase 4b |
+| 12 | Multi-select filters — not in original plan | Implemented in Phase 4b: `_activeFilters: string[]`, All mutual-exclusion, fallback-to-All, `aria-pressed` | User request |
 | 13 | Demo property playground | Not in original plan | User request — planned in Phase 8 |
+| 14 | Grouping + `has-more` pagination interaction | Grouping is driven entirely by the shape of `el.results` (`isGrouped()`), not by `has-more`. Both flat and grouped are fully supported with `has-more`; host is responsible for page accumulation/merge. | Discussed and confirmed during design review — cleanest contract that gives host full control over data shape |
+| 15 | `bs:filter-change` with `{ filter: string }` | `{ filters: string[], filter: string }` | Multi-select requires full set; `filter` kept as compat alias for single-select hosts |
 
 ---
 
@@ -798,6 +797,9 @@ Decisions made during implementation that differ from the original plan, or feat
 - [x] `aria-disabled="true"` on `<input>` when `disabled` attr is set
 - [x] Focus trap: `Tab` from any result item closes dropdown + returns focus to input via `_onDropdownKeydown` on the container (event delegation)
 - [x] **Integration tests:** `banking-search-keyboard.test.ts` — 23 tests covering arrow nav, Enter select, Escape, Home/End, aria-activedescendant, aria-expanded, aria-disabled, Tab focus trap, click select, disabled guard
+- [x] **Pagination/filter tests:** `banking-search-pagination.test.ts` — 47 tests covering `_allFlatResults`, `_flatResults`, results setter, `_fireSearch` reset, `_onLoadMore` (all branches), filter chip More/Less toggle, `_moveFocus` auto-expand, filter chip arrow-key nav, **multi-select filter state machine** (7), **hasMore flag lifecycle** (3)
+
+**Current test total: 104 tests across 5 files — all passing.**
 
 **Review Checkpoint 4:** Navigate entire component keyboard-only. Run axe-core — zero violations.
 **STATUS: COMPLETE**
@@ -814,43 +816,48 @@ Decisions made during implementation that differ from the original plan, or feat
 - If last specific filter is deselected → auto-fall-back to `['all']` (never allow zero active)
 - Visual: active chips show a filled/checkmark style; multiple chips can show active simultaneously
 
-**API changes (breaking — document in migration notes):**
+**API changes:**
 - Internal state: `_activeFilter: string` → `_activeFilters: string[]`
-- `bs:filter-change` detail: `{ filter: string }` → `{ filters: string[] }`
-- `bs:search` detail: adds `filters: string[]`, keeps `filter: string` as compat alias (`filters[0]` or `'all'`)
+- `bs:filter-change` detail: `{ filter: string }` → `{ filters: string[], filter: string }` (filter = compat alias)
+- `bs:search` detail: adds `filters: string[]`, keeps `filter: string` as compat alias
+- `bs:load-more` detail: forwards full `filters[]` so backend can apply multi-filter on each page
 - Filter bar ARIA: `role="radiogroup"` + `role="radio"` → `role="group"` + buttons with `aria-pressed`
 - Keyboard: `Space` / `Enter` toggles rather than always selects; arrow keys still navigate
 
 **Plan items:**
-- [ ] Replace `_activeFilter: string` with `_activeFilters: string[]` state
-- [ ] Update `_fireFilterChange` to accept toggle logic + "All" mutual-exclusion
-- [ ] Update `bs:filter-change` and `bs:search` event detail shapes + types file
-- [ ] Update chip render: `role="group"` + `aria-pressed` instead of radiogroup/radio
-- [ ] Update chip CSS: multi-active visual (current active style works; verify with N active chips)
-- [ ] Update demo: `bs:filter-change` handler receives `filters[]`; search filters mock data by multiple types
-- [ ] Update unit tests for new toggle logic
-- [ ] Update `BsFilterChangeDetail` and `BsSearchDetail` types
+- [x] Replace `_activeFilter: string` with `_activeFilters: string[]` state
+- [x] Update `_fireFilterChange` to accept toggle logic + "All" mutual-exclusion
+- [x] Update `bs:filter-change` and `bs:search` event detail shapes + types file
+- [x] Update chip render: `role="group"` + `aria-pressed` instead of radiogroup/radio
+- [x] Update chip CSS: multi-active visual (current active style works; verified with N active chips)
+- [x] Update demo: `bs:filter-change` handler receives `filters[]`; search filters mock data by multiple types
+- [x] Update unit tests for new toggle logic — 7 new tests covering all state transitions
+- [x] Update `BsFilterChangeDetail` and `BsSearchDetail` types
 
 **Review Checkpoint 4b:** Select "Accounts" + "Cards" → results show both entity types. "All" clears both.
+**STATUS: COMPLETE**
 
 ---
 
 ### Phase 5 — Theming, Visual Polish & Mobile
 **Goal:** Light/dark/auto themes work. Looks production-quality. Mobile-ready.
 
-- [ ] Complete `banking-search.styles.ts` — all CSS custom properties wired up
-- [ ] Dark theme via `:host([theme="dark"])` overrides
-- [ ] Auto theme via `@media (prefers-color-scheme: dark)` on `:host([theme="auto"])`
-- [ ] Loading skeleton — CSS animation (`@keyframes shimmer`), `prefers-reduced-motion` off
-- [ ] Badge variants: success (green), warning (amber), error (red), neutral (grey)
-- [ ] Group header style (subtle label + count)
-- [ ] `<mark>` highlight style — contrast-safe
-- [ ] Mobile: 44×44px touch targets, `font-size: 16px` on input (prevents iOS zoom), responsive filter bar
-- [ ] Filter overflow "More" button styled consistently with chips
-- [ ] Smooth open/close transition (`clip-path` or `opacity + transform`, disabled when `prefers-reduced-motion`)
-- [ ] **Visual review:** all states, both themes, mobile viewport
+> All items below were completed as part of Phase 3 to keep the component visually coherent from the start.
+
+- [x] Complete `banking-search.styles.ts` — all CSS custom properties wired up
+- [x] Dark theme via `:host([theme="dark"])` overrides
+- [x] Auto theme via `@media (prefers-color-scheme: dark)` on `:host([theme="auto"])`
+- [x] Loading skeleton — CSS animation (`@keyframes shimmer`), `prefers-reduced-motion` aware
+- [x] Badge variants: success (green), warning (amber), error (red), neutral (grey)
+- [x] Group header style (subtle label + count)
+- [x] `<mark>` highlight style — contrast-safe
+- [x] Mobile: 44×44px touch targets, `font-size: 16px` on input (prevents iOS zoom), responsive filter bar
+- [x] Filter overflow "More" button styled consistently with chips
+- [x] Smooth open/close transition (`opacity + transform`, disabled when `prefers-reduced-motion`)
+- [x] **Visual review:** all states, both themes, mobile viewport confirmed in demo
 
 **Review Checkpoint 5:** Full visual polish pass — demo looks interview-ready.
+**STATUS: COMPLETE** *(delivered ahead of schedule in Phase 3)*
 
 ---
 
