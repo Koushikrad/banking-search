@@ -345,7 +345,7 @@
         id="search"
         placeholder="Search accounts, customers, transactions…"
         theme="light"
-        min-chars="2"
+        min-chars="1"
         debounce-ms="300"
         page-size="5"
         highlight-matches
@@ -364,6 +364,7 @@
 
     <div class="scenario-grid" role="group" aria-label="Test scenarios">
       <button class="btn active" id="btn-normal" onclick="setScenario('normal')">Normal Results</button>
+      <button class="btn" id="btn-paginated" onclick="setScenario('paginated')">Paginated (has-more)</button>
       <button class="btn" id="btn-empty" onclick="setScenario('empty')">Empty Results</button>
       <button class="btn" id="btn-loading-stuck" onclick="setScenario('loading-stuck')">Loading (stuck)</button>
       <button class="btn btn-danger" id="btn-network" onclick="setScenario('network-error')">Network Error</button>
@@ -621,6 +622,11 @@ let simDelay   = 600;
 let controller;
 let simulatedOffline = false;
 
+// Stores the full flat result set for the current paginated search so that
+// bs:load-more can return the correct slice without re-running the search.
+let paginatedPool = [];
+const PAGE_SIZE   = 5; // must match page-size attribute on the element
+
 // Set initial filters — 12 total, exercises the overflow "More" button
 el.filters = [
   { id: 'all',             label: 'All'            },
@@ -657,12 +663,30 @@ el.addEventListener('bs:search', async ({ detail }) => {
     case 'normal': {
       const data = searchMockData(detail.term, detail.filter);
       el.results = data;
+      el.removeAttribute('has-more');
       const total = data.reduce((s, g) => s + g.items.length, 0);
       updatePills(detail.filter, total);
       break;
     }
+    case 'paginated': {
+      // Flat results so pagination is easy to follow in the log.
+      const q = detail.term.toLowerCase();
+      const typeFilter = FILTER_TYPE_MAP[detail.filter];
+      paginatedPool = MOCK_DATA.filter(item => {
+        if (typeFilter && item.type !== typeFilter) return false;
+        return item.title.toLowerCase().includes(q) ||
+               (item.subtitle ?? '').toLowerCase().includes(q);
+      });
+      // Return only the first page; set has-more if there are additional pages.
+      el.results = paginatedPool.slice(0, PAGE_SIZE);
+      el.toggleAttribute('has-more', paginatedPool.length > PAGE_SIZE);
+      updatePills(detail.filter, paginatedPool.length);
+      log('bs:search', `paginated — ${paginatedPool.length} total, page 1 of ${Math.ceil(paginatedPool.length / PAGE_SIZE)}`);
+      break;
+    }
     case 'empty':
       el.results = [];
+      el.removeAttribute('has-more');
       updatePills(detail.filter, 0);
       break;
     case 'loading-stuck':
@@ -714,14 +738,34 @@ el.addEventListener('bs:retry', ({ detail }) => {
 el.addEventListener('bs:open',  () => log('bs:open',  '—'));
 el.addEventListener('bs:close', () => log('bs:close', '—'));
 
-// bs:load-more — fired when the user scrolls to the bottom and has-more is true.
-// In this demo all data is local, so there are no real additional pages.
-// We simulate a brief loading state then signal "no more" to dismiss the spinner.
+// bs:load-more — append the next batch from paginatedPool and update has-more.
 el.addEventListener('bs:load-more', async ({ detail }) => {
   log('bs:load-more', `page=${detail.page} term="${detail.term}" filter="${detail.filter}"`);
-  // Simulate a short fetch delay, then tell the component there are no more pages.
-  await sleep(800);
-  el.removeAttribute('has-more');
+
+  if (scenario !== 'paginated') {
+    // For non-paginated scenarios just clear has-more so the spinner goes away.
+    await sleep(600);
+    el.removeAttribute('has-more');
+    return;
+  }
+
+  try {
+    await sleep(simDelay, controller?.signal);
+  } catch {
+    return; // aborted by a new search
+  }
+
+  const offset = (detail.page - 1) * PAGE_SIZE;
+  const nextBatch = paginatedPool.slice(offset, offset + PAGE_SIZE);
+
+  // Append to whatever the component currently holds (flat array).
+  el.results = [...el.results, ...nextBatch];
+
+  const hasMore = offset + PAGE_SIZE < paginatedPool.length;
+  el.toggleAttribute('has-more', hasMore);
+
+  const totalPages = Math.ceil(paginatedPool.length / PAGE_SIZE);
+  log('bs:load-more', `delivered page ${detail.page}/${totalPages} (+${nextBatch.length} items)${hasMore ? ' — more available' : ' — end of results'}`);
 });
 
 // ── Utilities ────────────────────────────────────────────────────────────────

@@ -228,14 +228,9 @@ export const styles = css`
 
   .filter-bar {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
     padding: 8px 0 4px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .filter-bar::-webkit-scrollbar {
-    display: none;
   }
 
   .filter-chip {
@@ -292,6 +287,39 @@ export const styles = css`
   .filter-chip.active .chip-count {
     background: var(--bs-primary);
     color: #ffffff;
+  }
+
+  /*
+   * "+N more" / "Show less" toggle — visually distinct from the active filter
+   * chips but stays in the same row. Uses a dashed border so it reads as a
+   * secondary action rather than a selectable filter.
+   */
+  .btn-more-filters {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    min-height: 30px;
+    flex-shrink: 0;
+    border: 1.5px dashed var(--bs-border);
+    border-radius: var(--bs-radius-pill);
+    background: transparent;
+    color: var(--bs-text-secondary);
+    font-family: var(--bs-font-family);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.12s, color 0.12s;
+  }
+
+  .btn-more-filters:hover {
+    border-color: var(--bs-primary);
+    color: var(--bs-primary);
+  }
+
+  .btn-more-filters:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
   }
 
   /* ─── Search hint ─────────────────────────────────────────────────────────── */

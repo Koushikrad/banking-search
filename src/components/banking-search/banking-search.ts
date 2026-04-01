@@ -36,6 +36,16 @@ import type {
 } from './banking-search.types.js';
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Number of filter chips shown before the "+N more" toggle button appears.
+ * Keeps the filter bar to a single compact row on first render.
+ */
+const FILTERS_VISIBLE = 4;
+
+// ---------------------------------------------------------------------------
 // Type guard — distinguishes flat vs grouped results
 // ---------------------------------------------------------------------------
 function isGrouped(results: SearchResults): results is SearchResultGroup[] {
@@ -233,6 +243,9 @@ export class BankingSearch extends LitElement {
 
   /** True while a bs:load-more request is in-flight — prevents duplicate fires. */
   @state() private _loadingMore = false;
+
+  /** Whether the filter bar is showing all chips or only the first FILTERS_VISIBLE. */
+  @state() private _filtersExpanded = false;
 
   // -------------------------------------------------------------------------
   // Shadow DOM element refs (resolved after first render)
@@ -801,7 +814,10 @@ export class BankingSearch extends LitElement {
             role="radiogroup"
             aria-label="Filter results"
           >
-            ${this._filters.map(f => html`
+            ${(this._filtersExpanded
+                ? this._filters
+                : this._filters.slice(0, FILTERS_VISIBLE)
+              ).map(f => html`
               <button
                 class="filter-chip ${this._activeFilter === f.id ? 'active' : ''}"
                 role="radio"
@@ -815,6 +831,21 @@ export class BankingSearch extends LitElement {
                   : nothing}
               </button>
             `)}
+            ${this._filters.length > FILTERS_VISIBLE ? html`
+              <button
+                class="btn-more-filters"
+                type="button"
+                aria-expanded=${this._filtersExpanded ? 'true' : 'false'}
+                aria-label=${this._filtersExpanded
+                  ? 'Show fewer filters'
+                  : `Show ${this._filters.length - FILTERS_VISIBLE} more filters`}
+                @click=${() => { this._filtersExpanded = !this._filtersExpanded; }}
+              >
+                ${this._filtersExpanded
+                  ? 'Show less'
+                  : `+${this._filters.length - FILTERS_VISIBLE} more`}
+              </button>
+            ` : nothing}
           </div>` : nothing}
 
         ${belowMinChars ? html`

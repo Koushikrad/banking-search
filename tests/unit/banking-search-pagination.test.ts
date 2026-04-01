@@ -291,6 +291,56 @@ describe('_onLoadMore()', () => {
   });
 });
 
+describe('filter chips More/Less toggle', () => {
+  it('shows only FILTERS_VISIBLE chips initially when there are more', async () => {
+    const el = await mount();
+    el.filters = Array.from({ length: 8 }, (_, i) => ({ id: `f${i}`, label: `F${i}` }));
+    await el.updateComplete;
+
+    // 4 filter chips + 1 "more" button rendered
+    const chips = el.shadowRoot!.querySelectorAll('.filter-chip');
+    expect(chips.length).toBe(4);
+
+    const moreBtn = el.shadowRoot!.querySelector('.btn-more-filters');
+    expect(moreBtn).not.toBeNull();
+    expect(moreBtn!.textContent!.trim()).toBe('+4 more');
+  });
+
+  it('shows all chips after clicking More', async () => {
+    const el = await mount();
+    el.filters = Array.from({ length: 8 }, (_, i) => ({ id: `f${i}`, label: `F${i}` }));
+    await el.updateComplete;
+
+    (el.shadowRoot!.querySelector('.btn-more-filters') as HTMLElement).click();
+    await el.updateComplete;
+
+    expect(el.shadowRoot!.querySelectorAll('.filter-chip').length).toBe(8);
+    expect(el.shadowRoot!.querySelector('.btn-more-filters')!.textContent!.trim()).toBe('Show less');
+  });
+
+  it('collapses back to FILTERS_VISIBLE after clicking Show less', async () => {
+    const el = await mount();
+    el.filters = Array.from({ length: 8 }, (_, i) => ({ id: `f${i}`, label: `F${i}` }));
+    (el as any)._filtersExpanded = true;
+    await el.updateComplete;
+
+    (el.shadowRoot!.querySelector('.btn-more-filters') as HTMLElement).click();
+    await el.updateComplete;
+
+    expect(el.shadowRoot!.querySelectorAll('.filter-chip').length).toBe(4);
+    expect(el.shadowRoot!.querySelector('.btn-more-filters')!.textContent!.trim()).toBe('+4 more');
+  });
+
+  it('shows no More button when filters count <= FILTERS_VISIBLE', async () => {
+    const el = await mount();
+    el.filters = Array.from({ length: 3 }, (_, i) => ({ id: `f${i}`, label: `F${i}` }));
+    await el.updateComplete;
+
+    expect(el.shadowRoot!.querySelectorAll('.filter-chip').length).toBe(3);
+    expect(el.shadowRoot!.querySelector('.btn-more-filters')).toBeNull();
+  });
+});
+
 describe('_moveFocus() auto-expand', () => {
   it('expands visible window by 1 when arrowing past last visible item', async () => {
     const el = await mount();
