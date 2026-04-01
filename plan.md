@@ -732,6 +732,28 @@ Each phase ends with a **Review Checkpoint** — user reviews the output, we dis
 
 ---
 
+### Deviations & Late Additions (running log)
+
+Decisions made during implementation that differ from the original plan, or features added mid-build. Kept here so the plan stays honest.
+
+| # | Original plan | What actually shipped | Why |
+|---|---|---|---|
+| 1 | `max-results` attribute (cap per group) | Replaced with `page-size` + `has-more` (pagination system) | Richer UX — scroll/arrow-key to load more rather than hard cap |
+| 2 | Click-outside via `pointerdown` on `document` | `focusout` + `relatedTarget` + `shadowRoot.contains()` | Handles keyboard Tab-out for free; no document-level listener; Shadow DOM retargeting is simpler with `relatedTarget` |
+| 3 | Filter overflow as a dropdown (`role="listbox"`) | Collapse/expand toggle with "+N more" dashed button | Simpler UX for a filter bar; no nested ARIA listbox needed; revisit if axe audit flags |
+| 4 | `BsSearchDetail` with `{ term, filter }` | Added `requestId: string` to every search-related event | Enables `AbortController` cancellation pattern on the host side |
+| 5 | `bs:load-more` event — not in original plan | Added with `{ term, filter, page, requestId }` detail | Required by pagination system; documented in `banking-search.types.ts` |
+| 6 | `aria-expanded` as boolean property | Must be string `'true'`/`'false'` | Lit renders boolean properties as empty-string attributes; ARIA requires the string value |
+| 7 | `_onFocusOut` using `composedPath()` | Uses `relatedTarget` check | `composedPath()` always includes `this` when registered on `this`; `relatedTarget` correctly identifies where focus is going |
+| 8 | `_unsafeSvg()` home-rolled via `innerHTML` | Lit's `unsafeSVG()` directive | Official API; no manual template cloning |
+| 9 | `"dev": "vite demo"` script | `"dev": "vite"` | Setting root to `demo/` broke `vite.config.ts` pickup |
+| 10 | `min-chars="2"` in demo | Changed to `min-chars="1"` | Easier to demo pagination and results during review |
+| 11 | `ArrowUp` from first result wraps to input | Wraps within listbox (to last item) | Consistent with most combobox implementations; re-raising if accessibility audit disagrees |
+| 12 | Multi-select filters | Not in original plan | User request — planned as Phase 4b |
+| 13 | Demo property playground | Not in original plan | User request — planned in Phase 8 |
+
+---
+
 ### Phase 3 — Dropdown Positioning & State Machine
 **Goal:** Dropdown opens in the right place, repositions on scroll/resize, closes on click-outside. All component states (idle/loading/results/empty/error) render correctly.
 
@@ -765,20 +787,51 @@ Each phase ends with a **Review Checkpoint** — user reviews the output, we dis
 ### Phase 4 — Keyboard Navigation & Full Accessibility
 **Goal:** Fully keyboard-operable. Screen reader announces state changes. WCAG AA compliant.
 
-- [ ] Input keydown handler: `ArrowDown` → focus first result, `Escape` → close + return focus
-- [ ] Listbox keydown handler: `ArrowDown/Up` wrap, `Enter` → select, `Home/End`, `Tab` → close
-- [ ] `aria-activedescendant` on input pointing to highlighted option `id`
-- [ ] Scroll highlighted item into view if listbox is scrollable
-- [ ] Filter chips — roving tabindex: `ArrowLeft/Right` navigate chips, `Enter/Space` select
-- [ ] More button — `ArrowDown` opens overflow dropdown, `Escape` closes
-- [ ] `aria-live="polite"` announces result count: "5 results found", "No results for 'xyz'"
-- [ ] `aria-busy="true/false"` on listbox during loading
-- [ ] `aria-disabled` on input when disabled
-- [ ] Focus trap: Tab from last result returns to input (not outside component)
-- [ ] Filter overflow dropdown: `role="listbox"`, `role="option"`, `aria-selected`
-- [ ] **Integration tests:** full keyboard flow — arrow nav, enter select, escape close, filter chip nav, More button
+- [x] Input keydown handler: `ArrowDown` → focus first result, `Escape` → close + return focus
+- [x] Listbox keydown handler: `ArrowDown/Up` wrap, `Enter` → select, `Home/End`, `Tab` → close
+- [x] `aria-activedescendant` on input pointing to highlighted option `id`
+- [x] Scroll highlighted item into view — `_scrollActiveIntoView()` via `getBoundingClientRect` diff; avoids `scrollIntoView()` which also scrolls the page
+- [x] Filter chips — roving tabindex + `_onFilterBarKeydown`: `ArrowLeft/Right/Up/Down` navigate chips, wraps at edges; `Home/End` jump to first/last; arrow nav limited to currently rendered (visible) chips
+- [x] **DEVIATION:** More button is a collapse/expand toggle (not a dropdown) — shows first `FILTERS_VISIBLE=4` chips + "+N more" dashed pill; clicking expands to show all. Simpler UX, no nested listbox needed. Original plan called for an overflow dropdown with `role="listbox"` — revisit only if axe audit flags it.
+- [x] `aria-live="polite"` announces result count — done in Phase 3
+- [x] `aria-busy="true/false"` on listbox during loading — done in Phase 3
+- [ ] `aria-disabled="true"` on `<input>` when `disabled` attr is set (CSS opacity exists but ARIA attr missing)
+- [ ] Focus trap: `Tab` from last result wraps back to input (not outside component)
+- [ ] **Integration tests:** full keyboard flow — arrow nav, enter select, escape close, filter chip nav, More button expand/collapse
 
 **Review Checkpoint 4:** Navigate entire component keyboard-only. Run axe-core — zero violations.
+**STATUS: ~80% COMPLETE — remaining items: aria-disabled, focus trap, integration tests**
+
+---
+
+### Phase 4b — Multi-Select Filter Chips *(new — added from user feedback)*
+**Goal:** Let users combine multiple filters (e.g. "Accounts + Cards"). "All" is mutually exclusive.
+
+**Behaviour rules:**
+- Zero or more non-All filters can be active simultaneously
+- Clicking "All" → clears every other filter, sets `_activeFilters = ['all']`
+- Clicking a non-All filter when "All" is active → deselects "All", activates clicked filter
+- If last specific filter is deselected → auto-fall-back to `['all']` (never allow zero active)
+- Visual: active chips show a filled/checkmark style; multiple chips can show active simultaneously
+
+**API changes (breaking — document in migration notes):**
+- Internal state: `_activeFilter: string` → `_activeFilters: string[]`
+- `bs:filter-change` detail: `{ filter: string }` → `{ filters: string[] }`
+- `bs:search` detail: adds `filters: string[]`, keeps `filter: string` as compat alias (`filters[0]` or `'all'`)
+- Filter bar ARIA: `role="radiogroup"` + `role="radio"` → `role="group"` + buttons with `aria-pressed`
+- Keyboard: `Space` / `Enter` toggles rather than always selects; arrow keys still navigate
+
+**Plan items:**
+- [ ] Replace `_activeFilter: string` with `_activeFilters: string[]` state
+- [ ] Update `_fireFilterChange` to accept toggle logic + "All" mutual-exclusion
+- [ ] Update `bs:filter-change` and `bs:search` event detail shapes + types file
+- [ ] Update chip render: `role="group"` + `aria-pressed` instead of radiogroup/radio
+- [ ] Update chip CSS: multi-active visual (current active style works; verify with N active chips)
+- [ ] Update demo: `bs:filter-change` handler receives `filters[]`; search filters mock data by multiple types
+- [ ] Update unit tests for new toggle logic
+- [ ] Update `BsFilterChangeDetail` and `BsSearchDetail` types
+
+**Review Checkpoint 4b:** Select "Accounts" + "Cards" → results show both entity types. "All" clears both.
 
 ---
 
@@ -862,15 +915,40 @@ Each phase ends with a **Review Checkpoint** — user reviews the output, we dis
 **Goal:** Professional demo page + documentation that an interviewer can open and immediately understand.
 
 **Demo page (`demo/index.html`):**
-- [ ] 47+ mock items across 11 banking entity types
-- [ ] 12 filter chips (triggers overflow More button)
-- [ ] Simulated 400ms async delay + loading state
-- [ ] Theme toggle (Light / Dark / Auto)
-- [ ] Error simulation button
-- [ ] Offline simulation button
+- [x] 47+ mock items across 11 banking entity types
+- [x] 12 filter chips (triggers More button)
+- [x] Simulated async delay + loading state
+- [x] Theme toggle (Light / Dark / Auto) + page dark mode toggle
+- [x] Error simulation buttons (network, timeout, rate-limited, server)
+- [x] Offline simulation button
+- [x] Paginated scenario with `has-more` — demonstrates scroll + arrow-key pagination
+- [x] Event log panel — live stream of all custom events with timestamps
+- [x] Code snippet panel showing integration example
 - [ ] Custom `renderItem` example toggle
 - [ ] Keyboard shortcut callout: `Tab` to focus, `↓` to navigate, `Enter` to select, `Esc` to close
-- [ ] Code snippet panel showing integration example
+
+**Property Playground card *(new — added from user feedback):***
+Add an interactive card in the demo that lets visitors tweak every host-settable attribute in real time and see the component react — so an interviewer can explore the full API without reading code.
+
+Controls to include:
+| Control | Type | Property |
+|---|---|---|
+| Placeholder text | `<input type="text">` | `placeholder` attr |
+| Min chars | `<input type="range" min=0 max=5>` | `min-chars` attr |
+| Debounce (ms) | `<input type="range" min=0 max=1500>` | `debounce-ms` attr |
+| Page size | `<input type="range" min=1 max=20>` | `page-size` attr |
+| Highlight matches | toggle | `highlight-matches` attr |
+| Disabled | toggle | `disabled` attr |
+| No-results text | `<input type="text">` | `no-results-text` attr |
+| Hint text | `<input type="text">` | `hint` attr |
+
+Each control updates the attribute on `<banking-search>` immediately. Current attribute value displayed alongside each control.
+
+- [ ] Implement property playground card in `demo/index.html`
+- [ ] Each control reads initial value from the element's current attribute
+- [ ] Debounce/page-size/min-chars use sliders with live value readout
+- [ ] Boolean attrs (highlight-matches, disabled) use styled toggle switches
+- [ ] Text attrs (placeholder, no-results-text, hint) use `<input type="text">` with live binding
 
 **README.md:**
 - [ ] Project overview + screenshot
@@ -909,7 +987,7 @@ Each phase ends with a **Review Checkpoint** — user reviews the output, we dis
 | Memory leaks | Arrow-field bound methods, all torn down in `disconnectedCallback` | Prevents ghost listeners after component removal |
 | Positioning performance | `requestAnimationFrame` batching, `cancelAnimationFrame` on repeated triggers | Avoids layout thrashing from rapid scroll/resize events |
 | Dropdown stacking strategy | `position: fixed` inside Shadow Root + `contain: style` (NOT layout) | `Popover` API considered; deferred for enterprise browser support — architecture supports future migration |
-| Click/tab-outside detection | `pointerdown` on document **+** `focusout` + `composedPath()` on host | `pointerdown` alone misses keyboard tab-out; `composedPath()` handles Shadow DOM event retargeting correctly |
+| Click/tab-outside detection | `focusout` on host + `relatedTarget` + `shadowRoot.contains()` | `pointerdown` on document missed keyboard Tab-out; `composedPath()` unreliable when listener is on `this`; `relatedTarget` correctly identifies where focus is going, including shadow DOM internals |
 | Error display | Never show raw server errors; map to user-safe strings | Security — no internal path/stack leakage to UI |
 | Stale response prevention | `requestId` in `bs:search` detail; host uses AbortController | Prevents older responses overwriting newer results |
 | Offline resilience | Internal `online`/`offline` listener + `navigator.onLine` check | Component self-heals without host involvement |
