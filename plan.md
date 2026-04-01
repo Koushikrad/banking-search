@@ -795,12 +795,12 @@ Decisions made during implementation that differ from the original plan, or feat
 - [x] **DEVIATION:** More button is a collapse/expand toggle (not a dropdown) — shows first `FILTERS_VISIBLE=4` chips + "+N more" dashed pill; clicking expands to show all. Simpler UX, no nested listbox needed. Original plan called for an overflow dropdown with `role="listbox"` — revisit only if axe audit flags it.
 - [x] `aria-live="polite"` announces result count — done in Phase 3
 - [x] `aria-busy="true/false"` on listbox during loading — done in Phase 3
-- [ ] `aria-disabled="true"` on `<input>` when `disabled` attr is set (CSS opacity exists but ARIA attr missing)
-- [ ] Focus trap: `Tab` from last result wraps back to input (not outside component)
-- [ ] **Integration tests:** full keyboard flow — arrow nav, enter select, escape close, filter chip nav, More button expand/collapse
+- [x] `aria-disabled="true"` on `<input>` when `disabled` attr is set
+- [x] Focus trap: `Tab` from any result item closes dropdown + returns focus to input via `_onDropdownKeydown` on the container (event delegation)
+- [x] **Integration tests:** `banking-search-keyboard.test.ts` — 23 tests covering arrow nav, Enter select, Escape, Home/End, aria-activedescendant, aria-expanded, aria-disabled, Tab focus trap, click select, disabled guard
 
 **Review Checkpoint 4:** Navigate entire component keyboard-only. Run axe-core — zero violations.
-**STATUS: ~80% COMPLETE — remaining items: aria-disabled, focus trap, integration tests**
+**STATUS: COMPLETE**
 
 ---
 

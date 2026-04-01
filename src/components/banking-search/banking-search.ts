@@ -382,6 +382,27 @@ export class BankingSearch extends LitElement {
   private _onScroll = (): void => { this._schedulePositionUpdate(); };
   private _onResize = (): void => { this._schedulePositionUpdate(); };
 
+  /**
+   * Focus trap for the results listbox.
+   *
+   * When the user presses Tab while a result item has focus, instead of moving
+   * focus out of the component (which would leave the dropdown open momentarily
+   * before focusout fires), we intercept Tab, close the dropdown, and return
+   * focus to the input. A second Tab from the input then moves focus to the
+   * next element on the page naturally.
+   *
+   * Why on the dropdown container (event delegation) rather than per-item?
+   * Result items are dynamically rendered — attaching/removing per-item
+   * listeners on every render is expensive and error-prone. A single handler
+   * on the stable container catches Tab bubbling up from any child.
+   */
+  private _onDropdownKeydown = (e: KeyboardEvent): void => {
+    if (e.key !== 'Tab' || !this._open) return;
+    e.preventDefault();
+    this._close();
+    this.shadowRoot?.querySelector('input')?.focus();
+  };
+
   // -------------------------------------------------------------------------
   // Lifecycle
   // -------------------------------------------------------------------------
@@ -902,6 +923,7 @@ export class BankingSearch extends LitElement {
             aria-autocomplete="list"
             aria-controls="results-listbox"
             aria-activedescendant=${this._activeIndex >= 0 ? `result-${this._activeIndex}` : ''}
+            aria-disabled=${this.disabled ? 'true' : 'false'}
             ?disabled=${this.disabled}
             @input=${this._onInput}
             @keydown=${this._onKeydown}
@@ -971,6 +993,7 @@ export class BankingSearch extends LitElement {
           aria-label="Search results"
           aria-busy=${this.loading ? 'true' : 'false'}
           class="dropdown ${this._open ? 'open' : ''}"
+          @keydown=${this._onDropdownKeydown}
         >
           <!-- Screen-reader live region: announces result count changes -->
           <div class="sr-only" aria-live="polite" aria-atomic="true">
