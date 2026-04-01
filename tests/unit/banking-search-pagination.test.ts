@@ -355,17 +355,58 @@ describe('_moveFocus() auto-expand', () => {
     expect((el as any)._activeIndex).toBe(3);
   });
 
-  it('wraps to top when arrowing past the last item in the full set', async () => {
+  it('wraps to top when arrowing past the last item and hasMore is false', async () => {
     const el = await mount();
     el.pageSize = 5;
     el.results  = items(5);
     (el as any)._visibleCount  = 5;
     (el as any)._activeIndex   = 4; // on last item
+    el.removeAttribute('has-more');
 
     (el as any)._moveFocus(1);
 
     expect((el as any)._activeIndex).toBe(0);
     expect((el as any)._visibleCount).toBe(5); // unchanged — nothing to expand
+  });
+
+  it('fires bs:load-more instead of wrapping when hasMore is true at end', async () => {
+    const el = await mount();
+    el.pageSize = 5;
+    el.results  = items(5);
+    el.setAttribute('has-more', '');
+    (el as any)._visibleCount  = 5;
+    (el as any)._activeIndex   = 4; // on last item
+    (el as any)._page          = 1;
+    (el as any)._inputValue    = 'x';
+    await el.updateComplete;
+
+    const fired: Event[] = [];
+    el.addEventListener('bs:load-more', (e) => fired.push(e));
+
+    (el as any)._moveFocus(1);
+
+    // Should NOT wrap to 0 — should stay on last item and fire load-more
+    expect((el as any)._activeIndex).toBe(4);
+    expect(fired).toHaveLength(1);
+    expect((el as any)._loadingMore).toBe(true);
+  });
+
+  it('stays on last item without firing when already loading', async () => {
+    const el = await mount();
+    el.pageSize = 5;
+    el.results  = items(5);
+    el.setAttribute('has-more', '');
+    (el as any)._visibleCount  = 5;
+    (el as any)._activeIndex   = 4;
+    (el as any)._loadingMore   = true; // already in-flight
+
+    const fired: Event[] = [];
+    el.addEventListener('bs:load-more', (e) => fired.push(e));
+
+    (el as any)._moveFocus(1);
+
+    expect((el as any)._activeIndex).toBe(4);
+    expect(fired).toHaveLength(0); // no duplicate fire
   });
 
   it('wraps to last visible item when arrowing up from index 0', async () => {
@@ -387,5 +428,108 @@ describe('_moveFocus() auto-expand', () => {
     (el as any)._moveFocus(1);
 
     expect((el as any)._activeIndex).toBe(-1);
+  });
+});
+
+describe('filter chip arrow key navigation', () => {
+  /** Fire a keydown on the filter bar and wait for Lit to settle. */
+  async function pressKey(el: BankingSearch, key: string): Promise<void> {
+    const bar = el.shadowRoot!.querySelector('.filter-bar') as HTMLElement;
+    bar.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    await el.updateComplete;
+  }
+
+  it('ArrowRight moves to next chip and fires bs:filter-change', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all',  label: 'All'  },
+      { id: 'acc',  label: 'Acc'  },
+      { id: 'txn',  label: 'Txn'  },
+    ];
+    (el as any)._activeFilter = 'all';
+    await el.updateComplete;
+
+    const events: string[] = [];
+    el.addEventListener('bs:filter-change', (e: Event) => {
+      events.push((e as CustomEvent).detail.filter);
+    });
+
+    await pressKey(el, 'ArrowRight');
+
+    expect((el as any)._activeFilter).toBe('acc');
+    expect(events).toContain('acc');
+  });
+
+  it('ArrowLeft moves to previous chip', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all',  label: 'All'  },
+      { id: 'acc',  label: 'Acc'  },
+      { id: 'txn',  label: 'Txn'  },
+    ];
+    (el as any)._activeFilter = 'acc';
+    await el.updateComplete;
+
+    await pressKey(el, 'ArrowLeft');
+
+    expect((el as any)._activeFilter).toBe('all');
+  });
+
+  it('ArrowRight wraps from last chip back to first', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'all', label: 'All' },
+      { id: 'acc', label: 'Acc' },
+    ];
+    (el as any)._activeFilter = 'acc';
+    await el.updateComplete;
+
+    await pressKey(el, 'ArrowRight');
+
+    expect((el as any)._activeFilter).toBe('all');
+  });
+
+  it('Home key jumps to first chip', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'a', label: 'A' },
+      { id: 'b', label: 'B' },
+      { id: 'c', label: 'C' },
+    ];
+    (el as any)._activeFilter = 'c';
+    await el.updateComplete;
+
+    await pressKey(el, 'Home');
+
+    expect((el as any)._activeFilter).toBe('a');
+  });
+
+  it('End key jumps to last visible chip', async () => {
+    const el = await mount();
+    el.filters = [
+      { id: 'a', label: 'A' },
+      { id: 'b', label: 'B' },
+      { id: 'c', label: 'C' },
+    ];
+    (el as any)._activeFilter = 'a';
+    await el.updateComplete;
+
+    await pressKey(el, 'End');
+
+    expect((el as any)._activeFilter).toBe('c');
+  });
+
+  it('navigates only among visible chips when collapsed', async () => {
+    const el = await mount();
+    // 6 chips, collapsed shows first 4
+    el.filters = Array.from({ length: 6 }, (_, i) => ({ id: `f${i}`, label: `F${i}` }));
+    (el as any)._activeFilter     = 'f3'; // last visible chip
+    (el as any)._filtersExpanded  = false;
+    await el.updateComplete;
+
+    await pressKey(el, 'ArrowRight');
+
+    // Wraps within visible 4 — goes back to f0
+    expect((el as any)._activeFilter).toBe('f0');
   });
 });

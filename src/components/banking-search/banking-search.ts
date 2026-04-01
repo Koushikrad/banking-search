@@ -316,6 +316,66 @@ export class BankingSearch extends LitElement {
   private _onOffline = (): void => { this._offline = true;  };
 
   /**
+   * Roving tabindex keyboard navigation for filter chips.
+   *
+   * ARIA radiogroup pattern:
+   *  - Tab moves INTO the group (landing on the selected chip) and OUT of it.
+   *  - Arrow Left / Right (or Up / Down) move focus+selection within the group.
+   *  - Home / End jump to first / last chip.
+   *
+   * Navigation is limited to currently rendered chips — if the bar is collapsed
+   * only the first FILTERS_VISIBLE chips are navigable; expand with the More
+   * button to reach the rest.
+   *
+   * Why async: after _fireFilterChange() the active chip's tabindex changes.
+   * We await updateComplete so the chip has tabindex="0" before .focus() runs.
+   */
+  private _onFilterBarKeydown = async (e: KeyboardEvent): Promise<void> => {
+    const visibleFilters = this._filtersExpanded
+      ? this._filters
+      : this._filters.slice(0, FILTERS_VISIBLE);
+    const total = visibleFilters.length;
+    if (!total) return;
+
+    const currentIdx  = visibleFilters.findIndex(f => f.id === this._activeFilter);
+    const effectiveIdx = Math.max(currentIdx, 0);
+    let nextIdx: number | null = null;
+
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        e.preventDefault();
+        nextIdx = (effectiveIdx + 1) % total;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        e.preventDefault();
+        nextIdx = (effectiveIdx - 1 + total) % total;
+        break;
+      case 'Home':
+        e.preventDefault();
+        nextIdx = 0;
+        break;
+      case 'End':
+        e.preventDefault();
+        nextIdx = total - 1;
+        break;
+      default:
+        return;
+    }
+
+    const nextFilter = visibleFilters[nextIdx];
+    if (!nextFilter) return;
+
+    this._fireFilterChange(nextFilter.id);
+    await this.updateComplete;
+
+    // Move DOM focus to the chip that now has tabindex="0"
+    const chips = this.shadowRoot?.querySelectorAll<HTMLElement>('.filter-chip');
+    chips?.[nextIdx]?.focus();
+  };
+
+  /**
    * Scroll/resize: schedule a position update via rAF to batch rapid events.
    * cancelAnimationFrame ensures only the last call in a rapid burst runs.
    */
@@ -744,10 +804,16 @@ export class BankingSearch extends LitElement {
         // Reveal one more item so focus can land on it
         this._visibleCount = Math.min(this._visibleCount + 1, allItems.length);
         this._activeIndex = next;
-      } else {
-        // No more items in memory — wrap to top
+      } else if (this.hasMore && !this._loadingMore) {
+        // No more in-memory items but server has more — trigger a fetch.
+        // Keep focus on the last visible item; user can arrow down again once
+        // the new results arrive and the dropdown updates.
+        this._onLoadMore();
+      } else if (!this.hasMore && !this._loadingMore) {
+        // Truly at the end — wrap to top
         this._activeIndex = 0;
       }
+      // If already loading, stay on last item and wait
     } else {
       this._activeIndex = next;
     }
@@ -858,6 +924,7 @@ export class BankingSearch extends LitElement {
             class="filter-bar"
             role="radiogroup"
             aria-label="Filter results"
+            @keydown=${this._onFilterBarKeydown}
           >
             ${(this._filtersExpanded
                 ? this._filters
