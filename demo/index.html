@@ -1001,11 +1001,10 @@ onMounted(() =&gt; {
   </main>
 
   <!--
-  Import our Lit component from src/.
-  Vite resolves TypeScript and serves it in dev mode.
-  In production, swap this for: <script type="module" src="dist/banking-search.js"></script>
+  Dev: Vite resolves TypeScript directly from src/.
+  Production (GitHub Pages): the CI workflow swaps this to ./banking-search.js before deploying.
 -->
-  <script type="module" src="../dist/banking-search.umd.cjs"></script>
+  <script type="module" src="../src/index.ts"></script>
 
   <!-- ─── Demo wiring ─────────────────────────────────────────────────────── -->
   <script type="module">
