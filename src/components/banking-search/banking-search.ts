@@ -403,6 +403,19 @@ export class BankingSearch extends LitElement {
       this._sentinelObserver = null;
     }
 
+    // Scroll the keyboard-active item into the dropdown's visible area.
+    // Triggered when _activeIndex changes (arrow keys / Home / End) or when
+    // _visibleCount grows (arrow-key expansion reveals a previously hidden item).
+    // Both changes are batched into one render by Lit, so the item is in the
+    // DOM by the time updated() runs — safe to read its bounding rect here.
+    if (
+      this._open &&
+      this._activeIndex >= 0 &&
+      (changed.has('_activeIndex') || changed.has('_visibleCount'))
+    ) {
+      this._scrollActiveIntoView();
+    }
+
     // If has-more flips to false while a load was in-flight, clear the flag
     if (changed.has('hasMore') && !this.hasMore && this._loadingMore) {
       this._loadingMore = false;
@@ -439,6 +452,38 @@ export class BankingSearch extends LitElement {
   private _schedulePositionUpdate(): void {
     cancelAnimationFrame(this._rafId);
     this._rafId = requestAnimationFrame(() => this._updatePosition());
+  }
+
+  /**
+   * Ensures the keyboard-active result item is visible inside the dropdown.
+   *
+   * Why getBoundingClientRect instead of scrollIntoView?
+   *  - scrollIntoView() also scrolls every ancestor up to the viewport, which
+   *    would jerk the page when the dropdown is near the bottom of a long page.
+   *  - Using viewport coordinates from getBoundingClientRect on both the item
+   *    and the dropdown lets us calculate exactly how much to adjust scrollTop
+   *    inside the dropdown alone — no other scroll containers are touched.
+   *
+   * Called from updated() after Lit commits the DOM so the new item is
+   * guaranteed to be in the tree before we query its position.
+   */
+  private _scrollActiveIntoView(): void {
+    if (this._activeIndex < 0 || !this._dropdownEl) return;
+    const item = this.shadowRoot?.querySelector(
+      `#result-${this._activeIndex}`,
+    ) as HTMLElement | null;
+    if (!item) return;
+
+    const itemRect = item.getBoundingClientRect();
+    const dropRect = this._dropdownEl.getBoundingClientRect();
+
+    if (itemRect.top < dropRect.top) {
+      // Item is above the visible area — scroll up just enough
+      this._dropdownEl.scrollTop -= dropRect.top - itemRect.top;
+    } else if (itemRect.bottom > dropRect.bottom) {
+      // Item is below the visible area — scroll down just enough
+      this._dropdownEl.scrollTop += itemRect.bottom - dropRect.bottom;
+    }
   }
 
   /**
