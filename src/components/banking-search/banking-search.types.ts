@@ -183,6 +183,20 @@ export interface BsErrorDetail {
   timestamp: number;
 }
 
+/**
+ * Detail shape for the `bs:load-more` event.
+ * Fired when the user scrolls to the bottom of the results and `has-more` is true.
+ * The host should fetch the next page and append items to `el.results`.
+ */
+export interface BsLoadMoreDetail {
+  term: string;
+  filter: string;
+  /** 1-based page number — increments on each load-more trigger. */
+  page: number;
+  /** Stable ID per request — use to cancel in-flight fetches on new searches. */
+  requestId: string;
+}
+
 // ---------------------------------------------------------------------------
 // Custom item renderer
 // ---------------------------------------------------------------------------
