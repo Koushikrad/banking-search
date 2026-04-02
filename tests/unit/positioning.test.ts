@@ -102,6 +102,26 @@ describe('computePosition — horizontal clamping', () => {
   });
 });
 
+describe('computePosition — top edge clamping (above placement)', () => {
+  it('clamps top to 8px when above placement would produce a negative top', () => {
+    // Anchor near the top of a short viewport — flips above but raw top is negative
+    // anchor.top=50, dropdownHeight=200: raw top = 50 - 200 - 4 = -154 → clamped to 8
+    const anchor = { top: 50, left: 50, width: 400, height: 48 };
+    const shortViewport = { width: 800, height: 120 };
+    const result = computePosition(anchor, 200, shortViewport);
+    expect(result.placement).toBe('above');
+    expect(result.top).toBeGreaterThanOrEqual(8);
+  });
+
+  it('does not clamp top when above placement stays within viewport', () => {
+    // anchor.top=400, dropdownHeight=200: raw top = 400 - 200 - 4 = 196 — no clamp
+    const anchor = { top: 400, left: 50, width: 400, height: 48 };
+    const result = computePosition(anchor, 200, VIEWPORT);
+    expect(result.placement).toBe('above');
+    expect(result.top).toBe(196);
+  });
+});
+
 describe('computePosition — offset gap', () => {
   it('has a 4px gap between anchor bottom and dropdown top (placement below)', () => {
     const result = computePosition(ANCHOR_DEFAULT, 200, VIEWPORT);

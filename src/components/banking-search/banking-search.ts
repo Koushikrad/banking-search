@@ -60,7 +60,19 @@ function getErrorMessage(code: string): string {
 export class BankingSearch extends LitElement {
   static override styles = styles;
 
+  /**
+   * Opt in to the Form-Associated Custom Elements API so the browser treats
+   * this element like a native input: it participates in <form> submission,
+   * reset, and constraint validation. The selected item's id is submitted
+   * under the `name` attribute, matching the native <input name="..."> contract.
+   */
+  static formAssociated = true;
+
   // -- Attributes -------------------------------------------------------------
+
+  /** Form field name — submitted with the form when an item is selected. */
+  @property({ type: String, reflect: true })
+  name = '';
 
   /** Placeholder text shown inside the search input. */
   @property({ type: String })
@@ -192,6 +204,10 @@ export class BankingSearch extends LitElement {
   // -------------------------------------------------------------------------
   // Private internals — not reactive, managed manually
   // -------------------------------------------------------------------------
+
+  // attachInternals() may be unavailable in older browsers or jsdom.
+  private _internals: ElementInternals | null =
+    typeof this.attachInternals === 'function' ? this.attachInternals() : null;
 
   private _debounced: DebouncedFn<[string]> | null = null;
 
@@ -514,7 +530,11 @@ export class BankingSearch extends LitElement {
 
     // ── Read phase — all getBoundingClientRect before any style mutations ──
     const anchorRect   = this._wrapperEl.getBoundingClientRect();
-    const dropdownHeight = this._dropdownEl.scrollHeight;
+    // Use offsetHeight (visual height, clamped by max-height) not scrollHeight
+    // (full content height). When placed above the anchor, using scrollHeight
+    // would compute a negative top — pushing the dropdown off-screen once
+    // results load and content exceeds the max-height cap.
+    const dropdownHeight = this._dropdownEl.offsetHeight || this._dropdownEl.scrollHeight;
 
     // ── Compute ────────────────────────────────────────────────────────────
     const result = computePosition(
@@ -643,6 +663,7 @@ export class BankingSearch extends LitElement {
   private _fireSelect(item: SearchResultItem): void {
     const detail: BsSelectDetail = { item };
     this._emit('bs:select', detail);
+    this._internals?.setFormValue?.(item.id);
     if (item.url) {
       window.location.href = item.url;
     }
@@ -718,6 +739,7 @@ export class BankingSearch extends LitElement {
   private _onClear(): void {
     this._inputValue = '';
     this._results = [];
+    this._internals?.setFormValue?.(null); // clear the submitted value
     this._close();
     this._emit('bs:clear', {});
     this.shadowRoot?.querySelector('input')?.focus();

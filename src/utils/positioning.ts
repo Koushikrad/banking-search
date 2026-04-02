@@ -50,10 +50,16 @@ export function computePosition(
   const placement: 'below' | 'above' =
     spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove ? 'below' : 'above';
 
-  const top =
+  const rawTop =
     placement === 'below'
       ? anchor.top + anchor.height + OFFSET
       : anchor.top - dropdownHeight - OFFSET;
+
+  // Clamp so the dropdown never escapes the top edge of the viewport,
+  // mirroring the left-edge clamp below. Without this, "above" placement
+  // near the top of the screen produces a negative top — the first few
+  // result items scroll out of view above the viewport.
+  const top = Math.max(MARGIN, rawTop);
 
   let left = anchor.left;
   if (left + anchor.width > viewport.width - MARGIN) {
