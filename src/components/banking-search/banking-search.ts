@@ -1,14 +1,11 @@
 /**
- * banking-search.ts
  * @author Koushik R.
  *
- * The <banking-search> custom element — a framework-agnostic smart search
- * component for banking applications. Supports grouped results, filter chips,
- * keyboard navigation, light/dark/auto theming, and full WCAG AA accessibility.
+ * <banking-search> — smart search web component for banking applications.
  *
- * Built with Lit for reactive rendering and Shadow DOM style isolation.
- * No third-party positioning libraries — layout is hand-rolled via
- * getBoundingClientRect() + position: fixed + ResizeObserver.
+ * Supports flat and grouped results, multi-select filter chips, keyboard
+ * navigation, lazy loading via IntersectionObserver, and light/dark/auto
+ * theming. Works in any framework — no adapter required.
  */
 
 import { LitElement, html, nothing } from 'lit';
@@ -35,35 +32,10 @@ import type {
   BsLoadMoreDetail,
 } from './banking-search.types.js';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-/**
- * Number of filter chips shown before the "+N more" toggle button appears.
- * Keeps the filter bar to a single compact row on first render.
- */
+// Max chips shown before the "+N more" toggle appears.
 const FILTERS_VISIBLE = 4;
 
-// ---------------------------------------------------------------------------
-// Type guard — distinguishes flat vs grouped results
-// ---------------------------------------------------------------------------
-
-/**
- * Returns true when `results` is a `SearchResultGroup[]` (grouped mode).
- *
- * The test is intentionally minimal: presence of `groupId: string` on the
- * first element. This keeps the guard O(1) and avoids iterating the array.
- *
- * Rendering contract:
- *   isGrouped() === true  → _renderResults() uses the grouped path (group headers)
- *   isGrouped() === false → _renderResults() uses the flat path (no headers)
- *
- * The `has-more` attribute does NOT influence this decision. Grouping is
- * entirely driven by the shape of the data the host provides.
- * See SearchResultGroup in banking-search.types.ts for the full pagination
- * accumulation contract when using has-more with grouped results.
- */
+// O(1) check — presence of groupId on the first element is sufficient.
 function isGrouped(results: SearchResults): results is SearchResultGroup[] {
   return (
     results.length > 0 &&
@@ -71,10 +43,7 @@ function isGrouped(results: SearchResults): results is SearchResultGroup[] {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Error code → human-safe display message
-// Never display raw server error strings — always map to these safe messages.
-// ---------------------------------------------------------------------------
+// Never expose raw server error strings — always map to these safe messages.
 const ERROR_MESSAGES: Record<string, string> = {
   network:      'Unable to connect. Check your connection and try again.',
   timeout:      'Search is taking longer than expected. Try a more specific term.',
@@ -88,144 +57,74 @@ function getErrorMessage(code: string): string {
   return ERROR_MESSAGES[code] ?? code;
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export class BankingSearch extends LitElement {
   static override styles = styles;
 
-  // -------------------------------------------------------------------------
-  // Reflected attributes — set via HTML or JS property
-  // -------------------------------------------------------------------------
+  // -- Attributes -------------------------------------------------------------
 
   /** Placeholder text shown inside the search input. */
   @property({ type: String })
   placeholder = 'Search...';
 
-  /**
-   * Milliseconds to wait after the user stops typing before firing bs:search.
-   * Attribute: debounce-ms
-   */
+  /** Attribute: debounce-ms */
   @property({ type: Number, attribute: 'debounce-ms' })
   debounceMs = 300;
 
-  /**
-   * Minimum characters required before bs:search fires.
-   * Below this threshold the hint text is shown instead.
-   * Attribute: min-chars
-   */
+  /** Attribute: min-chars */
   @property({ type: Number, attribute: 'min-chars' })
   minChars = 2;
 
-  /**
-   * Number of results to render per page / batch.
-   * Controls both the initial visible count and how many more are loaded
-   * each time the user scrolls to the bottom of the dropdown.
-   * Attribute: page-size
-   */
+  /** Attribute: page-size */
   @property({ type: Number, attribute: 'page-size' })
   pageSize = 10;
 
-  /**
-   * Set by the host to indicate the server has more pages beyond what is
-   * currently in `results`. When true and the user scrolls to the bottom,
-   * the component fires `bs:load-more` so the host can fetch the next page.
-   * Attribute: has-more (boolean)
-   */
+  /** When true, scrolling to the bottom fires bs:load-more. Attribute: has-more */
   @property({ type: Boolean, attribute: 'has-more', reflect: true })
   hasMore = false;
 
-  /**
-   * Color scheme. 'auto' follows the OS prefers-color-scheme media query.
-   * Reflected so CSS :host([theme="dark"]) selectors work.
-   * Attribute: theme
-   */
+  /** 'auto' follows prefers-color-scheme. Reflected for :host([theme="..."]) CSS selectors. */
   @property({ type: String, reflect: true })
   theme: 'light' | 'dark' | 'auto' = 'auto';
 
-  /**
-   * Shows a loading skeleton in the dropdown while the host fetch is in-flight.
-   * Attribute: loading (boolean)
-   */
+  /** Shows a loading skeleton while the host fetch is in-flight. */
   @property({ type: Boolean, reflect: true })
   loading = false;
 
-  /**
-   * Disables all interaction.
-   * Attribute: disabled (boolean)
-   */
+  /** Disables all interaction. */
   @property({ type: Boolean, reflect: true })
   disabled = false;
 
-  /**
-   * When true, matched substrings in result titles are wrapped in <mark>.
-   * Attribute: highlight-matches
-   */
+  /** Wraps matched substrings in <mark>. Attribute: highlight-matches */
   @property({ type: Boolean, attribute: 'highlight-matches' })
   highlightMatches = true;
 
-  /**
-   * Message shown when results is an empty array.
-   * Attribute: no-results-text
-   */
+  /** Attribute: no-results-text */
   @property({ type: String, attribute: 'no-results-text' })
   noResultsText = 'No results found';
 
-  /**
-   * aria-label on the input element (i18n support).
-   * Attribute: search-label
-   */
+  /** aria-label on the input. Attribute: search-label */
   @property({ type: String, attribute: 'search-label' })
   searchLabel = 'Search';
 
-  /**
-   * Hint shown below the input when fewer than minChars have been typed.
-   * Use "{n}" as a token — replaced with the minChars value at render time.
-   * Attribute: hint
-   */
+  /** Shown below the input, above filters. Use "{n}" — replaced with minChars. */
   @property({ type: String })
   hint = 'Type {n}+ characters to search';
 
-  /**
-   * Error code or safe display message set by the host after a failed fetch.
-   * Mapped to human-safe strings via ERROR_MESSAGES.
-   * Attribute: error
-   */
+  /** Error code set by the host after a failed fetch. Mapped to user-safe messages. */
   @property({ type: String, reflect: true })
   error: string | null = null;
 
-  // -------------------------------------------------------------------------
-  // JavaScript-only properties
-  // -------------------------------------------------------------------------
+  // -- JS-only properties -----------------------------------------------------
 
   /**
-   * Search results — set by the host after receiving a `bs:search` event.
+   * Set by the host after receiving bs:search (or bs:load-more).
    *
-   * Accepts either:
-   * - `SearchResultItem[]` — flat list (no group headers)
-   * - `SearchResultGroup[]` — grouped list (sticky group headers)
+   * Accepts a flat SearchResultItem[] or a grouped SearchResultGroup[].
+   * The component always replaces — it never appends. For paginated results
+   * the host must accumulate pages before assigning. See README for examples.
    *
-   * The component replaces its internal state on every assignment. It does
-   * NOT append internally. This means for paginated scenarios (`has-more`)
-   * the host is responsible for accumulating result pages before assigning:
-   *
-   * ```typescript
-   * // Flat pagination:
-   * accumulated = [...accumulated, ...newPage.items];
-   * el.results = accumulated;
-   *
-   * // Grouped pagination (backend returns groups per page):
-   * newPage.groups.forEach(g => {
-   *   const existing = acc.find(a => a.groupId === g.groupId);
-   *   existing ? existing.items.push(...g.items) : acc.push(g);
-   * });
-   * el.results = [...acc];
-   * ```
-   *
-   * The reference-equality guard (`value === this._results`) prevents
-   * unnecessary re-renders when the same array reference is reassigned.
-   * Always assign a new array reference after mutating.
+   * Always assign a new array reference; the reference-equality guard skips
+   * unnecessary re-renders when the same reference is re-assigned.
    */
   get results(): SearchResults {
     return this._results;
@@ -244,10 +143,7 @@ export class BankingSearch extends LitElement {
   }
   private _results: SearchResults = [];
 
-  /**
-   * Filter chips shown in the filter bar.
-   * Set by the host: el.filters = [{ id: 'all', label: 'All' }, ...]
-   */
+  /** el.filters = [{ id: 'all', label: 'All' }, { id: 'accounts', label: 'Accounts' }] */
   get filters(): FilterOption[] {
     return this._filters;
   }
@@ -258,43 +154,24 @@ export class BankingSearch extends LitElement {
   }
   private _filters: FilterOption[] = [];
 
-  /**
-   * Optional custom item renderer.
-   * When set, called per result item instead of the built-in template.
-   * Must return a plain HTMLElement — do not use innerHTML with user data.
-   */
+  /** Custom row renderer. Return a plain HTMLElement — no innerHTML with user data. */
   renderItem: RenderItemFn | null = null;
 
-  // -------------------------------------------------------------------------
-  // Internal reactive state — changes trigger re-render
-  // -------------------------------------------------------------------------
+  // -- Internal state ---------------------------------------------------------
 
   @state() private _open = false;
   @state() private _activeIndex = -1;
 
-  /**
-   * Currently active filter IDs.
-   * "all" is mutually exclusive with every other filter:
-   *   - Selecting "all" clears all specific filters.
-   *   - Selecting any specific filter removes "all".
-   *   - Deselecting the last specific filter falls back to ["all"].
-   * Multiple specific filters can be active simultaneously.
-   */
+  // "all" is mutually exclusive with specifics. Deselecting the last specific
+  // falls back to ["all"] so there's always at least one active filter.
   @state() private _activeFilters: string[] = ['all'];
 
   @state() private _offline = false;
   @state() private _inputValue = '';
 
-  /** How many results are currently rendered. Starts at pageSize, grows on each load. */
-  @state() private _visibleCount = 0;
-
-  /** Current page number sent in bs:load-more (1-based). */
-  @state() private _page = 1;
-
-  /** True while a bs:load-more request is in-flight — prevents duplicate fires. */
-  @state() private _loadingMore = false;
-
-  /** Whether the filter bar is showing all chips or only the first FILTERS_VISIBLE. */
+  @state() private _visibleCount = 0;    // grows by pageSize on each load-more
+  @state() private _page = 1;            // 1-based, sent in bs:load-more detail
+  @state() private _loadingMore = false; // prevents duplicate sentinel fires
   @state() private _filtersExpanded = false;
 
   /**
