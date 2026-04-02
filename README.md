@@ -543,9 +543,3 @@ tests/unit/
 ├── banking-search-pagination.test.ts
 └── banking-search-extensibility.test.ts
 ```
-
----
-
-## License
-
-MIT
