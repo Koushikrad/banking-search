@@ -13,21 +13,21 @@
  *  - contain: style only — NOT layout/strict (see note in :host block).
  *
  * Light-theme contrast ratios (WCAG AA minimum 4.5:1 for normal text):
- *   --bs-text on --bs-bg                    : 14.7:1  AAA ✓
- *   --bs-text-secondary on --bs-bg          :  5.0:1  AA  ✓
- *   --bs-highlight-color on --bs-active-bg  :  7.2:1  AAA ✓
- *   --bs-error-text on --bs-bg              :  5.8:1  AA  ✓
- *   --bs-success-text on --bs-success-bg    :  7.4:1  AAA ✓
- *   --bs-warning-text on --bs-warning-bg    :  5.9:1  AA  ✓
- *   --bs-error-text on --bs-error-bg        :  6.9:1  AA  ✓
+ *   --bs-text on --bs-bg                    : 15.78:1  AAA ✓
+ *   --bs-text-secondary on --bs-bg          :  5.46:1  AA  ✓
+ *   --bs-highlight-color on --bs-active-bg  :  8.19:1  AAA ✓
+ *   --bs-error-text on --bs-bg              :  8.31:1  AAA ✓
+ *   --bs-success-text on --bs-success-bg    :  6.77:1  AA  ✓
+ *   --bs-warning-text on --bs-warning-bg    :  6.36:1  AA  ✓
+ *   --bs-error-text on --bs-error-bg        :  6.80:1  AA  ✓
  *
  * Dark-theme contrast ratios:
- *   --bs-text on --bs-bg                    : 14.1:1  AAA ✓
- *   --bs-text-secondary on --bs-bg          :  5.2:1  AA  ✓
- *   --bs-highlight-color on --bs-active-bg  :  5.3:1  AA  ✓
- *   --bs-success-text on --bs-success-bg    :  8.1:1  AAA ✓
- *   --bs-warning-text on --bs-warning-bg    :  9.2:1  AAA ✓
- *   --bs-error-text on --bs-error-bg        :  7.6:1  AAA ✓
+ *   --bs-text on --bs-bg                    : 15.27:1  AAA ✓
+ *   --bs-text-secondary on --bs-bg          :  5.57:1  AA  ✓
+ *   --bs-highlight-color on --bs-active-bg  :  6.37:1  AA  ✓
+ *   --bs-success-text on --bs-success-bg    :  6.37:1  AA  ✓
+ *   --bs-warning-text on --bs-warning-bg    : 10.38:1  AAA ✓
+ *   --bs-error-text on --bs-error-bg        :  8.50:1  AAA ✓
  */
 
 import { css } from 'lit';
