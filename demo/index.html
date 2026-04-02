@@ -1013,42 +1013,42 @@ onMounted(() =&gt; {
 
     const MOCK_DATA = [
       // Accounts
-      { id: 'acc-001', type: 'account', title: 'Primary Checking', subtitle: '****4821 · Chase Bank', badge: { label: 'Active', variant: 'success' } },
-      { id: 'acc-002', type: 'account', title: 'Premium Savings', subtitle: '****9102 · Chase Bank', badge: { label: 'Active', variant: 'success' } },
-      { id: 'acc-003', type: 'account', title: 'Business Checking Pro', subtitle: '****3376 · Wells Fargo', badge: { label: 'Active', variant: 'success' } },
-      { id: 'acc-004', type: 'account', title: 'Old Savings Account', subtitle: '****0012 · Bank of America', badge: { label: 'Closed', variant: 'neutral' } },
-      { id: 'acc-005', type: 'account', title: 'Emergency Fund', subtitle: '****5543 · Ally Bank', badge: { label: 'Active', variant: 'success' } },
-      { id: 'acc-006', type: 'account', title: 'Joint Current Account', subtitle: '****7721 · HSBC', badge: { label: 'Active', variant: 'success' } },
+      { id: 'acc-001', type: 'account', title: 'Primary Checking', subtitle: '****4821 · Chase Bank', badge: { label: 'Active', variant: 'success' }, meta: { 'Balance': '$12,450.00', 'Branch': 'Downtown SF', 'Opened': 'Jan 2019', 'Type': 'Checking' } },
+      { id: 'acc-002', type: 'account', title: 'Premium Savings', subtitle: '****9102 · Chase Bank', badge: { label: 'Active', variant: 'success' }, meta: { 'Balance': '$48,220.00', 'APY': '4.75%', 'Opened': 'Mar 2021', 'Type': 'Savings' } },
+      { id: 'acc-003', type: 'account', title: 'Business Checking Pro', subtitle: '****3376 · Wells Fargo', badge: { label: 'Active', variant: 'success' }, meta: { 'Balance': '$87,310.50', 'Branch': 'Mission District', 'Opened': 'Aug 2020', 'Type': 'Business' } },
+      { id: 'acc-004', type: 'account', title: 'Old Savings Account', subtitle: '****0012 · Bank of America', badge: { label: 'Closed', variant: 'neutral' }, meta: { 'Balance': '$0.00', 'Closed': 'Dec 2023', 'Type': 'Savings' } },
+      { id: 'acc-005', type: 'account', title: 'Emergency Fund', subtitle: '****5543 · Ally Bank', badge: { label: 'Active', variant: 'success' }, meta: { 'Balance': '$15,000.00', 'APY': '5.00%', 'Type': 'High-Yield Savings' } },
+      { id: 'acc-006', type: 'account', title: 'Joint Current Account', subtitle: '****7721 · HSBC', badge: { label: 'Active', variant: 'success' }, meta: { 'Balance': '$6,830.25', 'Holders': '2', 'Branch': 'Midtown', 'Type': 'Joint Current' } },
 
       // Transactions
-      { id: 'txn-001', type: 'transaction', title: 'Amazon Purchase', subtitle: '15 Mar 2026 · Debit', badge: { label: '-$234.99', variant: 'error' } },
-      { id: 'txn-002', type: 'transaction', title: 'Salary Deposit', subtitle: '1 Mar 2026 · Credit', badge: { label: '+$5,200', variant: 'success' } },
-      { id: 'txn-003', type: 'transaction', title: 'Netflix Subscription', subtitle: '12 Mar 2026 · Debit', badge: { label: '-$15.99', variant: 'error' } },
-      { id: 'txn-004', type: 'transaction', title: 'Wire Transfer — Johnson', subtitle: '8 Mar 2026 · Debit', badge: { label: '-$2,000', variant: 'warning' } },
-      { id: 'txn-005', type: 'transaction', title: 'ATM Withdrawal', subtitle: '5 Mar 2026 · Debit', badge: { label: '-$200', variant: 'error' } },
-      { id: 'txn-006', type: 'transaction', title: 'Apple Pay — Starbucks', subtitle: '28 Mar 2026 · Debit', badge: { label: '-$6.75', variant: 'error' } },
-      { id: 'txn-007', type: 'transaction', title: 'Dividend Payment', subtitle: '20 Mar 2026 · Credit', badge: { label: '+$312.00', variant: 'success' } },
+      { id: 'txn-001', type: 'transaction', title: 'Amazon Purchase', subtitle: '15 Mar 2026 · Debit', badge: { label: '-$234.99', variant: 'error' }, meta: { 'Account': '****4821', 'Category': 'Shopping', 'Reference': 'AMZ-8842019', 'Channel': 'Online' } },
+      { id: 'txn-002', type: 'transaction', title: 'Salary Deposit', subtitle: '1 Mar 2026 · Credit', badge: { label: '+$5,200', variant: 'success' }, meta: { 'Account': '****4821', 'From': 'Acme Corp Payroll', 'Reference': 'PAYROLL-MAR26', 'Category': 'Income' } },
+      { id: 'txn-003', type: 'transaction', title: 'Netflix Subscription', subtitle: '12 Mar 2026 · Debit', badge: { label: '-$15.99', variant: 'error' }, meta: { 'Account': '****1234', 'Category': 'Entertainment', 'Recurring': 'Yes', 'Next': '12 Apr 2026' } },
+      { id: 'txn-004', type: 'transaction', title: 'Wire Transfer — Johnson', subtitle: '8 Mar 2026 · Debit', badge: { label: '-$2,000', variant: 'warning' }, meta: { 'Account': '****4821', 'To': 'Robert Johnson', 'Reference': 'RENT-MAR26', 'Category': 'Transfer' } },
+      { id: 'txn-005', type: 'transaction', title: 'ATM Withdrawal', subtitle: '5 Mar 2026 · Debit', badge: { label: '-$200', variant: 'error' }, meta: { 'Account': '****4821', 'ATM': 'Chase — Market St', 'Category': 'Cash', 'Fee': '$0.00' } },
+      { id: 'txn-006', type: 'transaction', title: 'Apple Pay — Starbucks', subtitle: '28 Mar 2026 · Debit', badge: { label: '-$6.75', variant: 'error' }, meta: { 'Account': '****1234', 'Merchant': 'Starbucks #4421', 'Category': 'Food & Drink', 'Channel': 'Contactless' } },
+      { id: 'txn-007', type: 'transaction', title: 'Dividend Payment', subtitle: '20 Mar 2026 · Credit', badge: { label: '+$312.00', variant: 'success' }, meta: { 'Account': '****9102', 'Fund': 'S&P 500 Index', 'Quarter': 'Q1 2026', 'Category': 'Investment' } },
 
       // Customers
-      { id: 'cus-001', type: 'customer', title: 'James Whitfield', subtitle: 'ID #CUS-29481 · Premier', badge: { label: 'VIP', variant: 'warning' } },
-      { id: 'cus-002', type: 'customer', title: 'Sarah Chen', subtitle: 'ID #CUS-11034 · Standard', badge: { label: 'Active', variant: 'success' } },
-      { id: 'cus-003', type: 'customer', title: 'Marcus Thompson', subtitle: 'ID #CUS-44821 · Standard', badge: { label: 'Active', variant: 'success' } },
-      { id: 'cus-004', type: 'customer', title: 'Priya Acharya', subtitle: 'ID #CUS-78320 · Premier', badge: { label: 'VIP', variant: 'warning' } },
-      { id: 'cus-005', type: 'customer', title: 'David Okafor', subtitle: 'ID #CUS-55102 · Business', badge: { label: 'Active', variant: 'success' } },
-      { id: 'cus-006', type: 'customer', title: 'Elena Vasquez', subtitle: 'ID #CUS-63017 · Standard', badge: { label: 'Frozen', variant: 'error' } },
+      { id: 'cus-001', type: 'customer', title: 'James Whitfield', subtitle: 'ID #CUS-29481 · Premier', badge: { label: 'VIP', variant: 'warning' }, meta: { 'Email': 'j.whitfield@email.com', 'Phone': '+1 415 555 0192', 'Since': 'Feb 2015', 'Relationship': 'Premier' } },
+      { id: 'cus-002', type: 'customer', title: 'Sarah Chen', subtitle: 'ID #CUS-11034 · Standard', badge: { label: 'Active', variant: 'success' }, meta: { 'Email': 's.chen@email.com', 'Phone': '+1 628 555 0847', 'Since': 'Sep 2020', 'Accounts': '2' } },
+      { id: 'cus-003', type: 'customer', title: 'Marcus Thompson', subtitle: 'ID #CUS-44821 · Standard', badge: { label: 'Active', variant: 'success' }, meta: { 'Email': 'm.thompson@email.com', 'Phone': '+1 510 555 0334', 'Since': 'Jan 2022', 'Accounts': '1' } },
+      { id: 'cus-004', type: 'customer', title: 'Priya Acharya', subtitle: 'ID #CUS-78320 · Premier', badge: { label: 'VIP', variant: 'warning' }, meta: { 'Email': 'p.acharya@email.com', 'Phone': '+1 415 555 0771', 'Since': 'Nov 2012', 'Relationship': 'Premier' } },
+      { id: 'cus-005', type: 'customer', title: 'David Okafor', subtitle: 'ID #CUS-55102 · Business', badge: { label: 'Active', variant: 'success' }, meta: { 'Email': 'd.okafor@business.com', 'Phone': '+1 650 555 0128', 'Since': 'Jun 2019', 'Relationship': 'Business' } },
+      { id: 'cus-006', type: 'customer', title: 'Elena Vasquez', subtitle: 'ID #CUS-63017 · Standard', badge: { label: 'Frozen', variant: 'error' }, meta: { 'Email': 'e.vasquez@email.com', 'Phone': '+1 408 555 0953', 'Since': 'Mar 2021', 'Frozen': '18 Mar 2026' } },
 
       // Cards
-      { id: 'crd-001', type: 'card', title: 'Platinum Visa', subtitle: '****1234 · Expires 09/27', badge: { label: 'Active', variant: 'success' } },
-      { id: 'crd-002', type: 'card', title: 'Business Amex Gold', subtitle: '****5678 · Expires 03/26', badge: { label: 'Active', variant: 'success' } },
-      { id: 'crd-003', type: 'card', title: 'Rewards Mastercard', subtitle: '****9012 · Expires 11/25', badge: { label: 'Expired', variant: 'error' } },
-      { id: 'crd-004', type: 'card', title: 'Travel Debit Card', subtitle: '****3344 · Expires 06/28', badge: { label: 'Active', variant: 'success' } },
-      { id: 'crd-005', type: 'card', title: 'Virtual Card — Shop', subtitle: '****8801 · Expires 12/26', badge: { label: 'Blocked', variant: 'warning' } },
+      { id: 'crd-001', type: 'card', title: 'Platinum Visa', subtitle: '****1234 · Expires 09/27', badge: { label: 'Active', variant: 'success' }, meta: { 'Limit': '$15,000', 'Balance': '$3,240.50', 'Cashback': '2%', 'Network': 'Visa' } },
+      { id: 'crd-002', type: 'card', title: 'Business Amex Gold', subtitle: '****5678 · Expires 03/26', badge: { label: 'Active', variant: 'success' }, meta: { 'Limit': '$30,000', 'Balance': '$8,110.00', 'Points': '24,500', 'Network': 'Amex' } },
+      { id: 'crd-003', type: 'card', title: 'Rewards Mastercard', subtitle: '****9012 · Expires 11/25', badge: { label: 'Expired', variant: 'error' }, meta: { 'Limit': '$8,000', 'Balance': '$0.00', 'Expired': 'Nov 2025', 'Network': 'Mastercard' } },
+      { id: 'crd-004', type: 'card', title: 'Travel Debit Card', subtitle: '****3344 · Expires 06/28', badge: { label: 'Active', variant: 'success' }, meta: { 'Linked Account': '****4821', 'FX Fee': '0%', 'ATM Fee': 'Free', 'Network': 'Visa' } },
+      { id: 'crd-005', type: 'card', title: 'Virtual Card — Shop', subtitle: '****8801 · Expires 12/26', badge: { label: 'Blocked', variant: 'warning' }, meta: { 'Limit': '$500', 'Blocked': '22 Mar 2026', 'Reason': 'Suspicious activity', 'Network': 'Mastercard' } },
 
       // Loans
-      { id: 'lon-001', type: 'loan', title: 'Home Mortgage', subtitle: 'LN-88210 · 30yr Fixed 6.5%', badge: { label: 'Current', variant: 'success' } },
-      { id: 'lon-002', type: 'loan', title: 'Auto Loan', subtitle: 'LN-45123 · 5yr Fixed 7.2%', badge: { label: 'Current', variant: 'success' } },
-      { id: 'lon-003', type: 'loan', title: 'Personal Loan', subtitle: 'LN-33001 · 3yr Fixed 9.1%', badge: { label: 'Overdue', variant: 'error' } },
-      { id: 'lon-004', type: 'loan', title: 'Student Loan Refinance', subtitle: 'LN-12044 · 10yr Fixed 5.4%', badge: { label: 'Current', variant: 'success' } },
+      { id: 'lon-001', type: 'loan', title: 'Home Mortgage', subtitle: 'LN-88210 · 30yr Fixed 6.5%', badge: { label: 'Current', variant: 'success' }, meta: { 'Outstanding': '$284,500', 'Monthly': '$1,896', 'Next Due': '1 May 2026', 'Maturity': 'Apr 2052' } },
+      { id: 'lon-002', type: 'loan', title: 'Auto Loan', subtitle: 'LN-45123 · 5yr Fixed 7.2%', badge: { label: 'Current', variant: 'success' }, meta: { 'Outstanding': '$18,340', 'Monthly': '$412', 'Next Due': '10 May 2026', 'Maturity': 'Mar 2029' } },
+      { id: 'lon-003', type: 'loan', title: 'Personal Loan', subtitle: 'LN-33001 · 3yr Fixed 9.1%', badge: { label: 'Overdue', variant: 'error' }, meta: { 'Outstanding': '$6,200', 'Overdue By': '22 days', 'Late Fee': '$35', 'Maturity': 'Jan 2027' } },
+      { id: 'lon-004', type: 'loan', title: 'Student Loan Refinance', subtitle: 'LN-12044 · 10yr Fixed 5.4%', badge: { label: 'Current', variant: 'success' }, meta: { 'Outstanding': '$42,100', 'Monthly': '$452', 'Next Due': '15 May 2026', 'Maturity': 'Dec 2033' } },
 
       // Beneficiaries
       { id: 'ben-001', type: 'beneficiary', title: 'Robert Johnson', subtitle: 'BEN-001 · Chase ****9910', badge: { label: 'Verified', variant: 'success' } },

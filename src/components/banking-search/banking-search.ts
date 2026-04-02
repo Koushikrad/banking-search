@@ -45,12 +45,12 @@ function isGrouped(results: SearchResults): results is SearchResultGroup[] {
 
 // Never expose raw server error strings — always map to these safe messages.
 const ERROR_MESSAGES: Record<string, string> = {
-  network:      'Unable to connect. Check your connection and try again.',
-  timeout:      'Search is taking longer than expected. Try a more specific term.',
+  network: 'Unable to connect. Check your connection and try again.',
+  timeout: 'Search is taking longer than expected. Try a more specific term.',
   'rate-limited': 'Too many requests. Please wait a moment and try again.',
   unauthorized: 'You do not have permission to perform this search.',
-  server:       'Something went wrong on our end. Please try again.',
-  unknown:      'An unexpected error occurred. Please try again.',
+  server: 'Something went wrong on our end. Please try again.',
+  unknown: 'An unexpected error occurred. Please try again.',
 };
 
 function getErrorMessage(code: string): string {
@@ -126,8 +126,6 @@ export class BankingSearch extends LitElement {
   @property({ type: String, reflect: true })
   error: string | null = null;
 
-  // -- JS-only properties -----------------------------------------------------
-
   /**
    * Set by the host after receiving bs:search (or bs:load-more).
    *
@@ -194,12 +192,17 @@ export class BankingSearch extends LitElement {
    */
   @state() private _focusedFilterId = 'all';
 
+  // Meta tooltip — tracks which item is hovered and where to position the popup.
+  // Rendered outside the dropdown so overflow-y:auto on .dropdown doesn't clip it.
+  @state() private _tooltipItem: SearchResultItem | null = null;
+  @state() private _tooltipPos: { top: number; left: number } = { top: 0, left: 0 };
+
   // -------------------------------------------------------------------------
   // Shadow DOM element refs (resolved after first render)
   // -------------------------------------------------------------------------
 
   @query('.search-wrapper') private _wrapperEl!: HTMLElement;
-  @query('.dropdown')       private _dropdownEl!: HTMLElement;
+  @query('.dropdown') private _dropdownEl!: HTMLElement;
 
   // -------------------------------------------------------------------------
   // Private internals — not reactive, managed manually
@@ -263,8 +266,8 @@ export class BankingSearch extends LitElement {
     this._close();
   };
 
-  private _onOnline  = (): void => { this._offline = false; };
-  private _onOffline = (): void => { this._offline = true;  };
+  private _onOnline = (): void => { this._offline = false; };
+  private _onOffline = (): void => { this._offline = true; };
 
   /**
    * Roving tabindex keyboard navigation for filter chips.
@@ -288,7 +291,7 @@ export class BankingSearch extends LitElement {
     const total = visibleFilters.length;
     if (!total) return;
 
-    const currentIdx   = visibleFilters.findIndex(f => f.id === this._focusedFilterId);
+    const currentIdx = visibleFilters.findIndex(f => f.id === this._focusedFilterId);
     const effectiveIdx = Math.max(currentIdx, 0);
     let nextIdx: number | null = null;
 
@@ -354,6 +357,21 @@ export class BankingSearch extends LitElement {
     this.shadowRoot?.querySelector('input')?.focus();
   };
 
+  private _onItemMouseEnter = (e: MouseEvent, item: SearchResultItem): void => {
+    if (!item.meta || Object.keys(item.meta).length === 0) return;
+    // Touch devices fire mouseenter on tap but never mouseleave — the tooltip
+    // would get stuck. Only show on devices with a real hover capability.
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    // Position to the right of the icon column, just below the row
+    this._tooltipPos = { top: rect.bottom + 4, left: rect.left + 44 };
+    this._tooltipItem = item;
+  };
+
+  private _onItemMouseLeave = (): void => {
+    this._tooltipItem = null;
+  };
+
   // -------------------------------------------------------------------------
   // Lifecycle
   // -------------------------------------------------------------------------
@@ -367,7 +385,7 @@ export class BankingSearch extends LitElement {
     this.addEventListener('focusout', this._onFocusOut);
 
     // Online/offline detection
-    window.addEventListener('online',  this._onOnline);
+    window.addEventListener('online', this._onOnline);
     window.addEventListener('offline', this._onOffline);
 
     // Dropdown repositioning — window scroll + resize
@@ -390,10 +408,10 @@ export class BankingSearch extends LitElement {
 
     this._debounced?.cancel();
     this.removeEventListener('focusout', this._onFocusOut);
-    window.removeEventListener('online',  this._onOnline);
+    window.removeEventListener('online', this._onOnline);
     window.removeEventListener('offline', this._onOffline);
-    window.removeEventListener('scroll',  this._onScroll);
-    window.removeEventListener('resize',  this._onResize);
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('resize', this._onResize);
 
     cancelAnimationFrame(this._rafId);
 
@@ -529,7 +547,7 @@ export class BankingSearch extends LitElement {
     if (!this._open || !this._wrapperEl || !this._dropdownEl) return;
 
     // ── Read phase — all getBoundingClientRect before any style mutations ──
-    const anchorRect   = this._wrapperEl.getBoundingClientRect();
+    const anchorRect = this._wrapperEl.getBoundingClientRect();
     // Use offsetHeight (visual height, clamped by max-height) not scrollHeight
     // (full content height). When placed above the anchor, using scrollHeight
     // would compute a negative top — pushing the dropdown off-screen once
@@ -544,8 +562,8 @@ export class BankingSearch extends LitElement {
     );
 
     // ── Write phase ────────────────────────────────────────────────────────
-    this._dropdownEl.style.top   = `${result.top}px`;
-    this._dropdownEl.style.left  = `${result.left}px`;
+    this._dropdownEl.style.top = `${result.top}px`;
+    this._dropdownEl.style.left = `${result.left}px`;
     this._dropdownEl.style.width = `${result.width}px`;
     // data-placement lets CSS optionally adjust border-radius based on direction
     this._dropdownEl.dataset.placement = result.placement;
@@ -606,10 +624,10 @@ export class BankingSearch extends LitElement {
       this._loadingMore = true;
       this._page++;
       const detail: BsLoadMoreDetail = {
-        term:      this._inputValue,
-        filters:   this._activeFilters,
-        filter:    this._activeFilters.find(f => f !== 'all') ?? 'all',
-        page:      this._page,
+        term: this._inputValue,
+        filters: this._activeFilters,
+        filter: this._activeFilters.find(f => f !== 'all') ?? 'all',
+        page: this._page,
         requestId: crypto.randomUUID(),
       };
       this._emit('bs:load-more', detail);
@@ -650,8 +668,8 @@ export class BankingSearch extends LitElement {
     this._loadingMore = false;
     const detail: BsSearchDetail = {
       term,
-      filters:   this._activeFilters,
-      filter:    this._activeFilters.find(f => f !== 'all') ?? 'all',
+      filters: this._activeFilters,
+      filter: this._activeFilters.find(f => f !== 'all') ?? 'all',
       requestId: crypto.randomUUID(),
     };
     const wasOpen = this._open;
@@ -691,7 +709,7 @@ export class BankingSearch extends LitElement {
 
     const detail: BsFilterChangeDetail = {
       filters: this._activeFilters,
-      filter:  this._activeFilters.find(f => f !== 'all') ?? 'all',
+      filter: this._activeFilters.find(f => f !== 'all') ?? 'all',
     };
     this._emit('bs:filter-change', detail);
     if (this._inputValue.length >= this.minChars) {
@@ -701,9 +719,9 @@ export class BankingSearch extends LitElement {
 
   private _fireRetry(): void {
     const detail: BsRetryDetail = {
-      term:    this._inputValue,
+      term: this._inputValue,
       filters: this._activeFilters,
-      filter:  this._activeFilters.find(f => f !== 'all') ?? 'all',
+      filter: this._activeFilters.find(f => f !== 'all') ?? 'all',
     };
     this._emit('bs:retry', detail);
     this.loading = true;
@@ -858,10 +876,10 @@ export class BankingSearch extends LitElement {
     super.attributeChangedCallback(name, oldVal, newVal);
     if (name === 'error' && newVal !== null && newVal !== oldVal) {
       const detail: BsErrorDetail = {
-        code:      newVal,
-        term:      this._inputValue,
-        filters:   this._activeFilters,
-        filter:    this._activeFilters.find(f => f !== 'all') ?? 'all',
+        code: newVal,
+        term: this._inputValue,
+        filters: this._activeFilters,
+        filter: this._activeFilters.find(f => f !== 'all') ?? 'all',
         timestamp: Date.now(),
       };
       this._emit('bs:error', detail);
@@ -873,7 +891,7 @@ export class BankingSearch extends LitElement {
   // -------------------------------------------------------------------------
 
   override render() {
-    const hasValue  = this._inputValue.length > 0;
+    const hasValue = this._inputValue.length > 0;
     const flatItems = this._flatResults();
 
     return html`
@@ -935,9 +953,9 @@ export class BankingSearch extends LitElement {
             @keydown=${this._onFilterBarKeydown}
           >
             ${(this._filtersExpanded
-                ? this._filters
-                : this._filters.slice(0, FILTERS_VISIBLE)
-              ).map(f => html`
+          ? this._filters
+          : this._filters.slice(0, FILTERS_VISIBLE)
+        ).map(f => html`
               <button
                 class="filter-chip ${this._activeFilters.includes(f.id) ? 'active' : ''}"
                 aria-pressed=${this._activeFilters.includes(f.id) ? 'true' : 'false'}
@@ -946,8 +964,8 @@ export class BankingSearch extends LitElement {
               >
                 ${f.label}
                 ${f.count !== undefined
-                  ? html`<span class="chip-count">${f.count}</span>`
-                  : nothing}
+            ? html`<span class="chip-count">${f.count}</span>`
+            : nothing}
               </button>
             `)}
             ${this._filters.length > FILTERS_VISIBLE ? html`
@@ -956,13 +974,13 @@ export class BankingSearch extends LitElement {
                 type="button"
                 aria-expanded=${this._filtersExpanded ? 'true' : 'false'}
                 aria-label=${this._filtersExpanded
-                  ? 'Show fewer filters'
-                  : `Show ${this._filters.length - FILTERS_VISIBLE} more filters`}
+            ? 'Show fewer filters'
+            : `Show ${this._filters.length - FILTERS_VISIBLE} more filters`}
                 @click=${() => { this._filtersExpanded = !this._filtersExpanded; }}
               >
                 ${this._filtersExpanded
-                  ? 'Show less'
-                  : `+${this._filters.length - FILTERS_VISIBLE} more`}
+            ? 'Show less'
+            : `+${this._filters.length - FILTERS_VISIBLE} more`}
               </button>
             ` : nothing}
           </div>` : nothing}
@@ -978,22 +996,37 @@ export class BankingSearch extends LitElement {
           <!-- Screen-reader live region: announces result count changes -->
           <div class="sr-only" aria-live="polite" aria-atomic="true">
             ${this._open && !this.loading && !this.error
-              ? `${flatItems.length} result${flatItems.length === 1 ? '' : 's'} found`
-              : ''}
+        ? `${flatItems.length} result${flatItems.length === 1 ? '' : 's'} found`
+        : ''}
           </div>
 
           ${this.error
-            ? this._renderError()
-            : this.loading
-              ? this._renderLoading()
-              : this._open && !this._results.length
-                ? this._renderEmpty()
-                : this._open
-                  ? this._renderResults()
-                  : nothing}
+        ? this._renderError()
+        : this.loading
+          ? this._renderLoading()
+          : this._open && !this._results.length
+            ? this._renderEmpty()
+            : this._open
+              ? this._renderResults()
+              : nothing}
         </div>
 
       </div>
+
+      ${this._tooltipItem?.meta ? html`
+        <dl
+          class="meta-tooltip-popup"
+          role="tooltip"
+          aria-hidden="true"
+          style="top:${this._tooltipPos.top}px;left:${this._tooltipPos.left}px"
+        >
+          ${Object.entries(this._tooltipItem.meta).map(([key, value]) => html`
+            <div class="meta-row">
+              <dt class="meta-key">${key}</dt>
+              <dd class="meta-value">${value}</dd>
+            </div>
+          `)}
+        </dl>` : nothing}
     `;
   }
 
@@ -1039,14 +1072,14 @@ export class BankingSearch extends LitElement {
 
   private _renderResults() {
     const visibleCount = this._visibleCount > 0 ? this._visibleCount : this.pageSize;
-    const allCount     = this._allFlatResults().length;
+    const allCount = this._allFlatResults().length;
     // Show sentinel when more items exist in memory OR server has more pages
     const hasMoreToShow = visibleCount < allCount || this.hasMore;
 
     let listContent;
     if (isGrouped(this._results)) {
-      let remaining    = visibleCount;
-      let globalIndex  = 0;
+      let remaining = visibleCount;
+      let globalIndex = 0;
       listContent = html`${this._results.map(group => {
         if (remaining <= 0) return nothing;
         const visibleItems = group.items.slice(0, remaining);
@@ -1060,8 +1093,8 @@ export class BankingSearch extends LitElement {
             >
               ${group.label}
               ${group.total !== undefined
-                ? html`<span class="group-total">(${group.total} total)</span>`
-                : nothing}
+            ? html`<span class="group-total">(${group.total} total)</span>`
+            : nothing}
             </li>
             ${visibleItems.map(item => {
               const idx = globalIndex++;
@@ -1127,17 +1160,19 @@ export class BankingSearch extends LitElement {
         tabindex="-1"
         class="result-item ${isActive ? 'active' : ''}"
         @click=${() => this._fireSelect(item)}
+        @mouseenter=${(e: MouseEvent) => this._onItemMouseEnter(e, item)}
+        @mouseleave=${this._onItemMouseLeave}
       >
         <span class="result-icon" aria-hidden="true">${unsafeSVG(icon(iconKey))}</span>
         <div class="result-content">
           <span class="result-title">${titleContent}</span>
           ${item.subtitle
-            ? html`<span class="result-subtitle">${item.subtitle}</span>`
-            : nothing}
+        ? html`<span class="result-subtitle">${item.subtitle}</span>`
+        : nothing}
         </div>
         ${item.badge
-          ? html`<span class="badge badge--${item.badge.variant}">${item.badge.label}</span>`
-          : nothing}
+        ? html`<span class="badge badge--${item.badge.variant}">${item.badge.label}</span>`
+        : nothing}
       </li>
     `;
   }

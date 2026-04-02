@@ -500,6 +500,48 @@ export const styles = css`
   .badge--error   { background: var(--bs-error-bg);   color: var(--bs-error-text);   }
   .badge--neutral { background: var(--bs-neutral-bg); color: var(--bs-neutral-text); }
 
+  /* ─── Meta tooltip ────────────────────────────────────────────────────────── */
+
+  /*
+   * position: fixed so it escapes the dropdown's overflow-y:auto container.
+   * top/left are set inline by _onItemMouseEnter via getBoundingClientRect.
+   * Rendered at the shadow root level (sibling of .search-wrapper), not inside
+   * the scrolling list — same escape hatch used by the dropdown itself.
+   */
+  .meta-tooltip-popup {
+    position: fixed;
+    z-index: calc(var(--bs-z-index) + 1);
+    background: var(--bs-text);
+    color: var(--bs-bg);
+    border-radius: 6px;
+    padding: 8px 10px;
+    min-width: 180px;
+    max-width: 280px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+    margin: 0;
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .meta-key {
+    opacity: 0.65;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .meta-value {
+    text-align: right;
+    font-weight: 400;
+    margin: 0;
+  }
+
   /* ─── Loading skeleton ────────────────────────────────────────────────────── */
 
   .skeleton-row {
